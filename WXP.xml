@@ -1,0 +1,1043 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
+	<Frame name="WXP_Frame" hidden="False" parent="MainMenuExpBar" frameStrata="DIALOG">
+		<Scripts>
+			<OnLoad>WXP.OnLoad(self)</OnLoad>
+			<OnEvent>WXP.OnEvent(self, event, ...)</OnEvent>
+		</Scripts>
+		<Anchors><Anchor point="CENTER"/></Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture name="WXP_Background" setAllPoints="true">
+					<Color r="0" g="0" b="0" a="0"/>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK"></Layer>
+		</Layers>
+		<Size><AbsDimension x="1024" y="16"/></Size>
+	</Frame>
+	
+	<Frame name="WXP_Options" hidden="false" toplevel="true" frameStrata="DIALOG">
+		<Scripts>
+			<OnLoad>WXP.OnOptionsLoaded(self)</OnLoad>
+			<OnShow>if WXP_Settings then WXP.OnOptionsShown() end</OnShow>
+			<OnHide>if WXP_Settings then WXP.OnOptionsHidden() end</OnHide>
+		</Scripts>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString name="WXP_Opt_Title" text="WatchXP" inherits="GameFontNormalLarge" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT">
+							<Offset><AbsDimension x="16" y="-16"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_Subtitle" text="Shows markers on the experience bar for party members" inherits="GameFontHighlightSmall" nonspacewrap="true" maxLines="3" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Title" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-8"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_BlipSize" text="Blip Size" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-250"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_Offset" text="Vertical Offset" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-300"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<Texture name="WXP_OptBut_Blips" file="Interface\Addons\WatchXP\blips.tga">
+					<Size><AbsDimension x="256" y="256" /></Size>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-48"/></Offset>
+						</Anchor>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Checkbutton name="WXP_OptBut_Show" inherits="OptionsCheckButtonTemplate">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="0" y="-16"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.blip.show) end</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Show WatchXP")</OnLoad>
+					<OnClick>PlaySound("igMainMenuOptionCheckBoxOn") WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			
+			<Slider name="WXP_OptBut_BlipSize" inherits="OptionsSliderTemplate" minValue="8" maxValue="64" defaultValue="16" valueStep="1" obeyStepOnDrag="true">
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="WXP_Opt_BlipSize" relativePoint="RIGHT">
+						<Offset><AbsDimension x="68" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetValue(WXP_Settings.blip.size) end</OnShow>
+					<OnValueChanged>
+						_G[self:GetName().."Text"]:SetText(_G[self:GetName()]:GetValue())
+						WXP.OnWidgetUsed(self)
+					</OnValueChanged>
+					<OnMouseWheel>WXP.OnSliderScroll(self, delta)</OnMouseWheel>
+				</Scripts>
+			</Slider>
+			
+			<Slider name="WXP_OptBut_OffsetY" inherits="OptionsSliderTemplate" minValue="-100" maxValue="100" defaultValue="0" valueStep="1" obeyStepOnDrag="true">
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="WXP_Opt_Offset" relativePoint="RIGHT">
+						<Offset><AbsDimension x="32" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetValue(WXP_Settings.blip.offset.y) end</OnShow>
+					<OnValueChanged>
+						_G[self:GetName().."Text"]:SetText(_G[self:GetName()]:GetValue())
+						WXP.OnWidgetUsed(self)
+					</OnValueChanged>
+					<OnMouseWheel>WXP.OnSliderScroll(self, delta)</OnMouseWheel>
+				</Scripts>
+			</Slider>
+						
+			<Button name="WXP_OptBut_ZeroOffset" inherits="UIPanelButtonTemplate" text="0">
+				<Size><AbsDimension x="24" y="24"/></Size>
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="WXP_OptBut_OffsetY" relativePoint="RIGHT">
+						<Offset><AbsDimension x="16" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>WXP_OptBut_OffsetY:SetValue(0)</OnClick>
+				</Scripts>
+			</Button>
+			
+			<Button name="WXP_OptBut_Icon0" inherits="" text=" " alpha="0.5">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="0" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,0)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon1" inherits="" text=" " alpha="0.5">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="32" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,1)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon2" inherits="" text=" " alpha="0.5">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="64" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,2)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon3" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="96" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,3)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon4" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="128" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,4)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon5" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="160" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,5)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon6" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="192" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,6)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon7" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="224" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,7)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon8" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="0" y="-32"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,8)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon9" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="32" y="-32"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,9)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon10" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="64" y="-32"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,10)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon11" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="96" y="-32"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,11)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon12" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="128" y="-32"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,12)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon13" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="160" y="-32"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,13)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon14" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="192" y="-32"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,14)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon15" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="224" y="-32"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,15)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon16" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="0" y="-64"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,16)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon17" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="32" y="-64"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,17)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon18" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="64" y="-64"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,18)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon19" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="96" y="-64"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,19)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon20" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="128" y="-64"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,20)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon21" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="160" y="-64"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,21)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon22" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="192" y="-64"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,22)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon23" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="224" y="-64"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,23)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon24" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="0" y="-96"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,24)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon25" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="32" y="-96"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,25)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon26" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="64" y="-96"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,26)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon27" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="96" y="-96"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,27)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon28" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="128" y="-96"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,28)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon29" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="160" y="-96"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,29)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon30" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="0" y="-128"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,30)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon31" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="32" y="-128"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,31)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon32" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="64" y="-128"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,32)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon33" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="96" y="-128"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,33)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon34" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="128" y="-128"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,34)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon35" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="160" y="-128"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,35)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon36" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="192" y="-128"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,36)</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="WXP_OptBut_Icon37" inherits="" text=" " alpha="0">
+				<Size><AbsDimension x="32" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_Blips" relativePoint="TOPLEFT">
+						<Offset><AbsDimension x="224" y="-128"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self:SetNormalTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetHighlightTexture("Interface\\Addons\\WatchXP\\black.tga")
+						self:SetPushedTexture("Interface\\Addons\\WatchXP\\black.tga")
+					</OnLoad>
+					<OnClick>WXP.OnBlipSelected(self,37)</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+	</Frame>
+	
+	<Frame name="WXP_Options_Label" hidden="false" toplevel="true" frameStrata="DIALOG">
+		<Scripts>
+			<OnLoad>WXP.OnOptionsLoaded(self)</OnLoad>
+			<OnShow>WXP.OnOptionsShown()</OnShow>
+			<OnHide>WXP.OnOptionsHidden()</OnHide>
+		</Scripts>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString name="WXP_LabelOpt_Title" text="WatchXP" inherits="GameFontNormalLarge" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT">
+							<Offset><AbsDimension x="16" y="-16"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_LabelOpt_Subtitle" text="Control display of labels next to markers" inherits="GameFontHighlightSmall" nonspacewrap="true" maxLines="3" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Title" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-8"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_Font" text="Label Font" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-84"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_FontSize" text="Font Size" inherits="GameFontNormal" justifyH="CENTER" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-160"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_LabelOffset" text="Vertical Offset" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-220"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_ShowLevel" text="Show Level in Label:" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-290"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_ShowRealm" text="Show Realm in Label:" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-360"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Checkbutton name="WXP_OptBut_ShowLabels" inherits="OptionsCheckButtonTemplate">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="0" y="-16"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.show) end</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Show Labels")</OnLoad>
+					<OnClick>PlaySound("igMainMenuOptionCheckBoxOn") WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			
+			<Checkbutton name="WXP_OptBut_Font1" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-4"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "friz" and 1 or 0) end</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Friz Quadrata")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			<Checkbutton name="WXP_OptBut_Font2" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-16"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "arial" and 1 or 0) end</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Arial")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			<Checkbutton name="WXP_OptBut_Font3" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-28"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "morpheus" and 1 or 0) end</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Morpheus")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			<Checkbutton name="WXP_OptBut_Font4" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-40"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "skurri" and 1 or 0) end</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Skurri")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			
+			<Button name="WXP_OptBut_Color" inherits="UIPanelButtonTemplate" text="Label Color">
+				<Size><AbsDimension x="128" y="32"/></Size>
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="WXP_Opt_Font" relativePoint="RIGHT">
+						<Offset><AbsDimension x="150" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>WXP.ShowColorPicker()</OnClick>
+				</Scripts>
+			</Button>
+			
+			<Slider name="WXP_OptBut_FontSize" inherits="OptionsSliderTemplate" minValue="4" maxValue="36" defaultValue="12" valueStep="1" obeyStepOnDrag="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_FontSize" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="0" y="-12"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnValueChanged>_G[self:GetName().."Text"]:SetText(_G[self:GetName()]:GetValue()) WXP.OnWidgetUsed(self)</OnValueChanged>
+					<OnShow>if WXP_Settings then self:SetValue(WXP_Settings.label.font.size) end</OnShow>
+					<OnMouseWheel>WXP.OnSliderScroll(self, delta)</OnMouseWheel>
+				</Scripts>
+			</Slider>
+			
+			<Slider name="WXP_OptBut_LabelOffsetY" inherits="OptionsSliderTemplate" minValue="-100" maxValue="100" defaultValue="0" valueStep="1" obeyStepOnDrag="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_LabelOffset" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="0" y="-12"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnValueChanged>_G[self:GetName().."Text"]:SetText(_G[self:GetName()]:GetValue()) WXP.OnWidgetUsed(self)</OnValueChanged>
+					<OnShow>if WXP_Settings then self:SetValue(WXP_Settings.label.offset.y) end</OnShow>
+					<OnMouseWheel>WXP.OnSliderScroll(self, delta)</OnMouseWheel>
+				</Scripts>
+			</Slider>
+			
+			<Button name="WXP_OptBut_ZeroLabelOffset" inherits="UIPanelButtonTemplate" text="0">
+				<Size><AbsDimension x="24" y="24"/></Size>
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="WXP_OptBut_LabelOffsetY" relativePoint="RIGHT">
+						<Offset><AbsDimension x="16" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>WXP_OptBut_LabelOffsetY:SetValue(0)</OnClick>
+				</Scripts>
+			</Button>
+			
+			<Checkbutton name="WXP_OptBut_ShowLevel1" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_ShowLevel" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-4"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>
+						if WXP_Settings then
+							if WXP_Settings.label.showlevel == "never" then
+								self:SetChecked(1)
+							else
+								self:SetChecked(nil)
+							end
+						end
+					</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Never")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			<Checkbutton name="WXP_OptBut_ShowLevel2" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_ShowLevel" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-16"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>
+						if WXP_Settings then
+							if WXP_Settings.label.showlevel == "different" then self:SetChecked(1)
+							else self:SetChecked(nil) end
+						end
+					</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Different")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			<Checkbutton name="WXP_OptBut_ShowLevel3" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_ShowLevel" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-28"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>
+						if WXP_Settings then
+							if WXP_Settings.label.showlevel == "always" then self:SetChecked(1)
+							else self:SetChecked(nil) end
+						end
+					</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Always")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			
+			<Checkbutton name="WXP_OptBut_ShowRealm1" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_ShowRealm" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-4"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>
+						if WXP_Settings then
+							if WXP_Settings.label.showrealm == "never" then
+								self:SetChecked(1)
+							else
+								self:SetChecked(nil)
+							end
+						end
+					</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Never")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			<Checkbutton name="WXP_OptBut_ShowRealm2" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_ShowRealm" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-16"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>
+						if WXP_Settings then
+							if WXP_Settings.label.showrealm == "different" then self:SetChecked(1)
+							else self:SetChecked(nil) end
+						end
+					</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Different")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			<Checkbutton name="WXP_OptBut_ShowRealm3" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_ShowRealm" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="12" y="-28"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>
+						if WXP_Settings then
+							if WXP_Settings.label.showrealm == "always" then self:SetChecked(1)
+							else self:SetChecked(nil) end
+						end
+					</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Always")</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+		</Frames>
+	</Frame>
+</Ui>
