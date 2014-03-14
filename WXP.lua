@@ -1,11 +1,4 @@
---[[
-	todo:
-		figure out default conversion for new textures
-		choose default texture/texoffset
-]]
-
 WXP = {}
-
 WXP.version = GetAddOnMetadata("WatchXP","Version")
 WXP.date = GetAddOnMetadata("WatchXP","X-Date")
 

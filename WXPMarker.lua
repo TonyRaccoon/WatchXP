@@ -202,7 +202,7 @@ function WXPMarker:CheckFlip()			-- Check if a label should be flipped (near end
 	return false
 end
 
-function WXPMarker:GetIndex() -- Get this marker's index in WXPMarker.instances
+function WXPMarker:GetIndex()			-- Get this marker's index in WXPMarker.instances
 	for k,marker in pairs(WXPMarker.instances) do
 		if marker == self then
 			return k
