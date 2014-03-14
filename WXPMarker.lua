@@ -2,7 +2,6 @@
 
 WXPMarker = {}
 WXPMarker.instances = {}
-
 WXPMarker.__index = WXPMarker
 
 ----- Class methods -----
@@ -13,7 +12,6 @@ function WXPMarker.new(args)			-- Create a new marker
 	setmetatable(self, WXPMarker) -- Make an instance of WXPMarker
 	self.blip = WXPBlip.GetFree() -- Get a free (or new) blip
 	self.player = {name = args.name, realm = args.realm, level = args.level, xp = args.xp, xpmax = args.xpmax}
-	self.id = #WXPMarker.instances + 1
 	tinsert(WXPMarker.instances, self) -- Insert this instance into WXPMarker's instance container
 	self:Redraw()
 	WXPMarker.RedrawAll()
@@ -30,16 +28,16 @@ end
 function WXPMarker.RemoveAll()			-- Remove all markers
 	WXP.Debug("|cffff9326[Marker]|r Removing all markers")
 	
-	for i,marker in ipairs(WXPMarker.instances) do
+	for i,marker in pairs(WXPMarker.instances) do
 		marker:Remove()
 	end
 end
 
 function WXPMarker.Find(name, realm)	-- Find a marker by player name and realm
-	if #WXPMarker.instances == 0 then return false end
+	if WXPMarker.Count() == 0 then return nil end
 	
 	WXP.Debug("|cffff9326[Marker]|r Finding marker for", WXP.PlayerLink(name,realm))
-	for i,marker in ipairs(WXPMarker.instances) do
+	for i,marker in pairs(WXPMarker.instances) do
 		if marker.player.name:lower() == name:lower() and marker.player.realm:lower() == realm:lower() then
 			WXP.Debug("|cffff9326[Marker]|r Marker #"..i, "found for", WXP.PlayerLink(name,realm))
 			return marker
@@ -47,14 +45,14 @@ function WXPMarker.Find(name, realm)	-- Find a marker by player name and realm
 	end
 	
 	WXP.Debug("|cffff9326[Marker]|r No marker found for", WXP.PlayerLink(name,realm))
-	return false
+	return nil
 end
 
-function WXPMarker.All(sortmethod)
+function WXPMarker.All(sortmethod)		-- Returns an iterator containing all WXPMarkers, optionally sorted (rtl = right to left)
 	local sortedmarkers = {}
 	
-	for i,marker in ipairs(WXPMarker.instances) do
-		tinsert(sortedmarkers, {id=i, pos = marker.player.xp/marker.player.xpmax})
+	for k,marker in pairs(WXPMarker.instances) do
+		tinsert(sortedmarkers, {id=k, pos = marker.player.xp/marker.player.xpmax})
 	end
 	
 	if sortmethod == "rtl" then -- Return all markers, from rightmost to leftmost
@@ -66,20 +64,33 @@ function WXPMarker.All(sortmethod)
 	
 	return function()
 		i = i+1
-		if i <= len then return WXPMarker.instances[sortedmarkers[i].id] end
+		if i <= len then
+			return WXPMarker.instances[sortedmarkers[i].id]
+		end
 	end
+end
+
+function WXPMarker.Count()
+	local count = 0
+	
+	for i,marker in pairs(WXPMarker.instances) do
+		count = count+1
+	end
+	WXP.Debug("WXPMarker count is " .. count)
+	return count
 end
 
 ----- Instance methods -----
 
 function WXPMarker:Update(args)			-- Update the data of an existing marker
-	WXP.Debug("|cffff9326[Marker]|r Updating marker for", WXP.PlayerLink(args.player,args.realm))
+	WXP.Debug("|cffff9326[Marker]|r Updating marker for", WXP.PlayerLink(args.name,args.realm))
 	if args.name  then  self.player.name  = args.name   end
 	if args.realm then  self.player.realm = args.realm  end
 	if args.level then  self.player.level = args.level  end
 	if args.xp    then  self.player.xp    = args.xp     end
 	if args.xpmax then  self.player.xpmax = args.xpmax  end
 	self:Redraw()
+	WXPMarker.RedrawAll()
 end
 
 function WXPMarker:Redraw(checkflip)	-- Redraw a marker
@@ -102,7 +113,10 @@ function WXPMarker:Redraw(checkflip)	-- Redraw a marker
 	self.blip.fontstring:SetPoint("LEFT",self.blip.frame,"RIGHT",0,WXP_Settings.label.offset.y)
 	self.blip.orientation = "right"
 	
-	self.blip.texture:SetTexCoord(WXP.GetIconCoord(WXP.GetIconXYFromID(WXP_Settings.blip.id)))
+	--self.blip.texture:SetTexture("Interface\\Addons\\WatchXP\\blips\\" .. WXP_Settings.blip.texture .. ".tga")
+	self.blip.texture:SetTexture(WXP_Settings.blip.texture)
+	self.blip.texture:SetTexCoord(WXP_Settings.blip.texoffset.x1, WXP_Settings.blip.texoffset.x2,WXP_Settings.blip.texoffset.y1,WXP_Settings.blip.texoffset.y2)
+	
 	self.blip.frame:SetSize(WXP_Settings.blip.size,WXP_Settings.blip.size)
 	self.blip.texture:SetSize(WXP_Settings.blip.size,WXP_Settings.blip.size)
 	
@@ -152,12 +166,11 @@ function WXPMarker:Remove()				-- Remove a marker
 	if not self then return false end
 	self.blip.free = true
 	self.blip.frame:Hide()
-	WXP.Debug(self.id)
-	WXPMarker.instances[self.id] = nil
+	WXPMarker.instances[self:GetIndex()] = nil
 	WXPMarker.RedrawAll()
 end
 
-function WXPMarker:CheckFlip()			-- Check if a label should be flipped (near end of bar or next to another blip) (BROKEN: REWRITE)
+function WXPMarker:CheckFlip()			-- Check if a label should be flipped (near end of bar or next to another blip)
 	local width = self.blip.fontstring:GetStringWidth() * WXP_Frame:GetEffectiveScale()
 	local pos = self.blip.frame:GetRight() * WXP_Frame:GetEffectiveScale()
 	local rightpos = pos+width
@@ -165,7 +178,8 @@ function WXPMarker:CheckFlip()			-- Check if a label should be flipped (near end
 	
 	if rightpos > bar_right_edge then return true end -- label goes off right edge of experience bar
 	
-	for i,marker in ipairs(WXPMarker.instances) do
+	for k,marker in pairs(WXPMarker.instances) do
+		WXP.Debug(marker.player.xp / marker.player.xpmax, self.player.xp / self.player.xpmax)
 		if marker.player.xp/marker.player.xpmax > self.player.xp/self.player.xpmax then -- Only test against this blip if it's further to the right
 			WXP.Debug("Checking " .. self.player.xp .. " (right is " .. math.floor(rightpos) .. ") against " .. marker.player.xp)
 			WXP.Debug("   new is oriented: " .. marker.blip.orientation)
@@ -186,4 +200,14 @@ function WXPMarker:CheckFlip()			-- Check if a label should be flipped (near end
 	end
 	
 	return false
+end
+
+function WXPMarker:GetIndex() -- Get this marker's index in WXPMarker.instances
+	for k,marker in pairs(WXPMarker.instances) do
+		if marker == self then
+			return k
+		end
+	end
+	
+	return nil
 end

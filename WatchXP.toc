@@ -3,9 +3,10 @@
 ## Notes: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
 ## Author: Foxthorn
 ## Version: 3.0
-## X-Date: March 12, 2014
+## X-Date: March 14, 2014
 ## SavedVariables: WXP_Settings
 WXPBlip.lua
 WXPMarker.lua
+WXPBlipButton.lua
 WXP.lua
 WXP.xml

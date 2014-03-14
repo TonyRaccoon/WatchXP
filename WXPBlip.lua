@@ -3,12 +3,11 @@
 
 WXPBlip = {}
 WXPBlip.instances = {}
-
 WXPBlip.__index = WXPBlip
 
 ----- Class Methods -----
 
-function WXPBlip.new()					-- Create a new blip
+function WXPBlip.new()		-- Create a new blip
 	WXP.Debug("|cffff0080[Blip]|r Creating new blip")
 	local self = {} -- Create the instance
 	setmetatable(self, WXPBlip) -- Make an instance of WXPBlip
@@ -22,9 +21,10 @@ function WXPBlip.new()					-- Create a new blip
 	frame:SetScript("OnLeave", WXP.OnBlipMouseLeave)
 	
 	local texture = frame:CreateTexture("WXP_Tex_"..id,"ARTWORK")
-	frame:SetSize(WXP_Settings.blip.size,WXP_Settings.blip.size)
 	texture:SetAllPoints()
-	texture:SetTexture("Interface\\Addons\\WatchXP\\blips.tga")
+	
+	texture:SetTexture(WXP_Settings.blip.texture)
+	texture:SetTexCoord(WXP_Settings.blip.texoffset.x1, WXP_Settings.blip.texoffset.x2,WXP_Settings.blip.texoffset.y1,WXP_Settings.blip.texoffset.y2)
 	
 	local fontstring = frame:CreateFontString("WXP_Text_"..id,"ARTWORK","GameFontNormal")
 	
@@ -34,13 +34,12 @@ function WXPBlip.new()					-- Create a new blip
 	self.frame = frame
 	self.texture = texture
 	self.fontstring = fontstring
-	--self = {framename=frame:GetName(), texturename=texture:GetName(), fontstringname=fontstring:GetName()}
 	
 	tinsert(WXPBlip.instances, self)
 	return self
 end
 
-function WXPBlip.GetFree()				-- Get the first free blip, or create one if none are free
+function WXPBlip.GetFree()	-- Get the first free blip, or create one if none are free
 	WXP.Debug("|cffff0080[Blip]|r Finding first free blip")
 	for i,blip in ipairs(WXPBlip.instances) do
 		if blip.free then

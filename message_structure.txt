@@ -1,8 +1,0 @@
-party-xp,name,realm,level,xp,xpmax	sent to party, with XP payload
-party-req,name,realm				sent to party, request for XP info from everyone
-
-ask-xp,name,realm,level,xp,xpmax	sent to player, with XP payload
-ask-req,name,realm					sent to player, request for XP info
-
-wxp-bn-xp,name,realm,level,xp,xpmax	sent to BN friend, with XP payload
-wxp-bn-req							sent to BN friend, request for XP info

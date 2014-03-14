@@ -1,28 +1,8 @@
 --[[
-		1.31: Thought I fixed it, didn't
-		1.32: Fixed and bumped toc to 40000 (for real this time)
-		1.35: Added /wxp ask [player] command to get a marker for a person not in your group
-		1.4 : Changed max level from 80 to 85 for Cataclysm and hid the addon load message (who wants those anyway?)
-		1.41: Updated toc version to 4.2
-		1.42: Fixed problem (probably missing RegisterAddonMessagePrefix) preventing addon from working, and hid the loaded message for real this time
-		2.0 : Revamped addon to use blips instead of text, Changed config blip to "Example!" so people with the character name "Example" don't break everything, Redesigned options panel, Removed commands to change settings, just use the config panel
-		2.01: TOC update for 4.3
-		2.1 : Added RealID support for /wxp ask (use /wxp ask firstname lastname OR /wxp ask [position in friends list], it will detect the space in the name and use RealID instead of a character name)
-		2.11: Updated for 5.0.4
-		2.12: Fixed issue with blips showing up for max-level characters
-		2.13: Removed a debug print
-		2.14: Fixed an issue with the "Show Level in label" option not working correctly
-		2.2 : Maximum level is now determined automatically, instead of being hard-coded, so it will now start working again with MoP
-		2.21: Fixed "Whisper message missing target player!" error
-		2.22: Fixed markers not disappearing when someone leaves the group
-		2.23: Updated TOC version to 5.1
-		2.24: Updated TOC version to 5.2
-		2.25: Updated TOC version to 5.3
-		2.26: Updated TOC version to 5.4
-		3.0 : Rewrote how WatchXP shares data, fixed some cross-realm stuff
-]]--
-
---- Events ---
+	todo:
+		figure out default conversion for new textures
+		choose default texture/texoffset
+]]
 
 WXP = {}
 
@@ -35,8 +15,15 @@ WXP.default_settings = {
 	
 	blip = {
 		show = true,
-		id = 6,
-		size = 16,
+		size = 32,
+		texture = "",
+		
+		texoffset = {
+			x1 = 0,
+			x2 = 0,
+			y1 = 1,
+			y2 = 1
+		},
 		
 		offset = {
 			y = 0
@@ -66,7 +53,22 @@ WXP.default_settings = {
 	}
 }
 
-function WXP.OnLoad(self)				-- Fired when addon is loaded
+--[[
+	Message formats:
+	
+	party-xp,name,realm,level,xp,xpmax		sent to party, with XP payload
+	party-req,name,realm					sent to party, request for XP info from everyone
+
+	ask-xp,name,realm,level,xp,xpmax		sent to player, with XP payload
+	ask-req,name,realm						sent to player, request for XP info
+
+	wxp-bn-xp,name,realm,level,xp,xpmax		sent to BN friend, with XP payload
+	wxp-bn-req								sent to BN friend, request for XP info
+]]
+
+--- Events ---
+
+function WXP.OnLoad(self)						-- Fired when addon is loaded
 	SlashCmdList["WXP"] = WXP.OnCommand;
 	SLASH_WXP1 = "/watchxp";
 	SLASH_WXP2 = "/wxp";
@@ -84,7 +86,7 @@ function WXP.OnLoad(self)				-- Fired when addon is loaded
 	end
 end
 
-function WXP.OnEvent(self, event, ...)	-- Fired when a registered event is triggered
+function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is triggered
 	if event == "PLAYER_XP_UPDATE" then
 		WXP.SendExpToParty()
 	
@@ -112,6 +114,10 @@ function WXP.OnEvent(self, event, ...)	-- Fired when a registered event is trigg
 		
 		-- Finally, poll the party to get experience from party members
 		WXP.PollParty()
+		
+		-- Debug: open options panel on load
+		--InterfaceOptionsFrame_OpenToCategory("WatchXP")
+		--InterfaceOptionsFrame_OpenToCategory("WatchXP")
 	
 	elseif event == "CHAT_MSG_ADDON" then
 		local addonName, args, channel, sender = ...;
@@ -189,7 +195,7 @@ function WXP.OnEvent(self, event, ...)	-- Fired when a registered event is trigg
 	end
 end
 
-function WXP.OnCommand(cmd)				-- Fired when the player enters a command starting with /wxp
+function WXP.OnCommand(cmd)						-- Fired when the player enters a command starting with /wxp
 	if cmd == "config" or cmd == "options" or cmd == "settings" or cmd == "opt" or cmd == "cfg" or cmd == "win" then
 		InterfaceOptionsFrame_OpenToCategory("WatchXP")
 		InterfaceOptionsFrame_OpenToCategory("WatchXP") -- The first call to OpenToCategory after login/reloadui doesn't work properly due to a blizzard bug
@@ -236,18 +242,18 @@ end
 
 --- Core functions ---
 
-function WXP.Msg(msg)					-- Message output function
+function WXP.Msg(msg)							-- Message output function
 	DEFAULT_CHAT_FRAME:AddMessage("|cffd2b48c[WatchXP]|r "..msg)
 end
 
-function WXP.Debug(...)					-- Debug message output function
+function WXP.Debug(...)							-- Debug message output function
 	if WXP_Settings.debug then
 		local str = table.concat({...}, " ")
 		DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[WXP]|r " .. str)
 	end
 end
 
-function WXP.ToggleDisplay()			-- Toggle display of addon
+function WXP.ToggleDisplay()					-- Toggle display of addon
 	if WXP_Settings.blip.show then
 		WXP.Msg("Hiding WatchXP")
 		WXP_Frame:Hide()
@@ -260,20 +266,20 @@ function WXP.ToggleDisplay()			-- Toggle display of addon
 end
 
 
-function WXP.PollParty()				-- Send out XP req to party
+function WXP.PollParty()						-- Send out XP req to party
 	if GetNumSubgroupMembers("LE_PARTY_CATEGORY_HOME") == 0 then return end
 	WXP.Debug("|cff8888ff>>> Sending XP request to party|r")
 	local reqstr = string.format("party-req,%s,%s", UnitName("player"), GetRealmName("player"))
 	SendAddonMessage("WXP",reqstr,"PARTY")
 end
 
-function WXP.PollPlayer(name)			-- Send out XP req to player
+function WXP.PollPlayer(name)					-- Send out XP req to player
 	WXP.Msg("Sending XP request to "..WXP.PlayerLink(name))
 	local str = string.format("ask-req,%s,%s", UnitName("player"), GetRealmName("player"))
 	SendAddonMessage("WXP", str, "WHISPER", name)
 end
 
-function WXP.PollBNFriend(ident)		-- Send out XP req to Battle.net friend
+function WXP.PollBNFriend(ident)				-- Send out XP req to Battle.net friend
 	if not BNConnected() then WXP.Msg("Must be connected to RealID to use that feature") return end
 	
 	local pid
@@ -288,7 +294,7 @@ function WXP.PollBNFriend(ident)		-- Send out XP req to Battle.net friend
 end
 
 
-function WXP.SendExpToParty()			-- Send out new XP value to party (response to WXP.PollParty)
+function WXP.SendExpToParty()					-- Send out new XP value to party (response to WXP.PollParty)
 	if GetNumSubgroupMembers("LE_PARTY_CATEGORY_HOME") == 0 then return end
 	
 	if UnitLevel("player") == WXP.GetMaxLevel() then -- Don't send out info if we're max level
@@ -301,7 +307,7 @@ function WXP.SendExpToParty()			-- Send out new XP value to party (response to W
 	SendAddonMessage("WXP", str, "PARTY")
 end
 
-function WXP.SendExpToPlayer(name)		-- Send out new XP value to player (response to WXP.PollPlayer)
+function WXP.SendExpToPlayer(name)				-- Send out new XP value to player (response to WXP.PollPlayer)
 	if UnitLevel("player") == WXP.GetMaxLevel() then -- Don't send out info if we're max level
 		WXP.Debug("|cffd24cff>>> Skipping SendExpToPlayer, we're max level|r")
 		return
@@ -313,7 +319,7 @@ function WXP.SendExpToPlayer(name)		-- Send out new XP value to player (response
 	SendAddonMessage("WXP", str, "WHISPER", name)
 end
 
-function WXP.SendExpToBNFriend(pid)		-- Send out new XP value to Battle.net friend (response to WXP.PollBNFriend)
+function WXP.SendExpToBNFriend(pid)				-- Send out new XP value to Battle.net friend (response to WXP.PollBNFriend)
 	if UnitLevel("player") == WXP.GetMaxLevel() then -- Don't send out info if we're max level
 		return
 	end
@@ -323,62 +329,7 @@ function WXP.SendExpToBNFriend(pid)		-- Send out new XP value to Battle.net frie
 end
 
 
-function WXP.GetIconXYFromID(id)		-- Return the x,y texture coordinates of a blip icon with the given id
-	local x = 0
-	local y = 0
-	
-	if     id == 0  then x = 0; y = 0
-	elseif id == 1  then x = 1; y = 0
-	elseif id == 2  then x = 2; y = 0
-	elseif id == 3  then x = 3; y = 0
-	elseif id == 4  then x = 4; y = 0
-	elseif id == 5  then x = 5; y = 0
-	elseif id == 6  then x = 6; y = 0
-	elseif id == 7  then x = 7; y = 0
-	elseif id == 8  then x = 0; y = 1
-	elseif id == 9  then x = 1; y = 1
-	elseif id == 10 then x = 2; y = 1
-	elseif id == 11 then x = 3; y = 1
-	elseif id == 12 then x = 4; y = 1
-	elseif id == 13 then x = 5; y = 1
-	elseif id == 14 then x = 6; y = 1
-	elseif id == 15 then x = 7; y = 1
-	elseif id == 16 then x = 0; y = 2
-	elseif id == 17 then x = 1; y = 2
-	elseif id == 18 then x = 2; y = 2
-	elseif id == 19 then x = 3; y = 2
-	elseif id == 20 then x = 4; y = 2
-	elseif id == 21 then x = 5; y = 2
-	elseif id == 22 then x = 6; y = 2
-	elseif id == 23 then x = 7; y = 2
-	elseif id == 24 then x = 0; y = 3
-	elseif id == 25 then x = 1; y = 3
-	elseif id == 26 then x = 2; y = 3
-	elseif id == 27 then x = 3; y = 3
-	elseif id == 28 then x = 4; y = 3
-	elseif id == 29 then x = 5; y = 3
-	elseif id == 30 then x = 0; y = 4
-	elseif id == 31 then x = 1; y = 4
-	elseif id == 32 then x = 2; y = 4
-	elseif id == 33 then x = 3; y = 4
-	elseif id == 34 then x = 4; y = 4
-	elseif id == 35 then x = 5; y = 4
-	elseif id == 36 then x = 6; y = 4
-	elseif id == 37 then x = 7; y = 4
-	end
-	
-	return x,y
-end
-
-function WXP.GetIconCoord(x,y)			-- Get coordinates of an icon at x,y position
-	local l = x * .125
-	local r = l + .125
-	local t = y * .125
-	local b = t + .125
-	return l,r,t,b
-end
-
-function WXP.PlayerLink(name,realm)		-- Create a player link from a given name and realm
+function WXP.PlayerLink(name,realm)				-- Create a player link from a given name and realm
 	if realm and realm ~= GetRealmName("player") then
 		return format("|Hplayer:%s:123|h|cffffbf00[%s]|r|h", name.."-"..realm, name.."-"..realm)
 	else
@@ -390,13 +341,13 @@ function WXP.GetMaxLevel()
 	return MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
 end
 
-function WXP.BNMessageFilter(self,event,msg) -- Filter function to hide WXP RealID messages
+function WXP.BNMessageFilter(self,event,msg) 	-- Filter function to hide WXP RealID messages
 	if msg:find("wxp-bn-xp,") or msg:find("wxp-bn-req,") then
 		return true
 	end
 end
 
-function WXP.InsertDefaultSettings(tbl, def) -- Copies missing settings into WXP_Settings
+function WXP.InsertDefaultSettings(tbl, def) 	-- Copies missing settings into WXP_Settings
 	local newtable = tbl
 	for k,v in pairs(def) do
 		if type(v) == "table" then
@@ -411,7 +362,7 @@ function WXP.InsertDefaultSettings(tbl, def) -- Copies missing settings into WXP
 	return newtable
 end
 
-function WXP.ImportOlderSettings()		-- Upgrades older versions of settings
+function WXP.ImportOlderSettings()				-- Upgrades older versions of settings
 	if not WXP_Settings.version then -- pre 3.0
 		
 		if WXP_Settings.Show then
@@ -435,7 +386,49 @@ function WXP.ImportOlderSettings()		-- Upgrades older versions of settings
 		end
 		
 		if WXP_Settings.Blip then
-			WXP_Settings.blip.id = WXP_Settings.Blip
+			if WXP_Settings.Blip == 0  then WXP_Settings.blip.texture = "dot-white-blue"  end
+			if WXP_Settings.Blip == 1  then WXP_Settings.blip.texture = "dot-white-blue2" end
+			if WXP_Settings.Blip == 2  then WXP_Settings.blip.texture = "dot-white-red"   end
+			if WXP_Settings.Blip == 3  then WXP_Settings.blip.texture = "dot-white-gold"  end
+			if WXP_Settings.Blip == 4  then WXP_Settings.blip.texture = "dot-white-green" end
+			if WXP_Settings.Blip == 5  then WXP_Settings.blip.texture = "dot-gold-red"    end
+			if WXP_Settings.Blip == 6  then WXP_Settings.blip.texture = "dot-gold-gold"   end
+			if WXP_Settings.Blip == 7  then WXP_Settings.blip.texture = "dot-gold-green"  end
+			
+			if WXP_Settings.Blip == 8  then WXP_Settings.blip.texture = "dot-gold-gold"   end
+			if WXP_Settings.Blip == 9  then WXP_Settings.blip.texture = "exc-gold"        end
+			if WXP_Settings.Blip == 10 then WXP_Settings.blip.texture = "question-gold"   end
+			if WXP_Settings.Blip == 11 then WXP_Settings.blip.texture = "exc-blue"        end
+			if WXP_Settings.Blip == 12 then WXP_Settings.blip.texture = "question-blue"   end
+			if WXP_Settings.Blip == 13 then WXP_Settings.blip.texture = "exc-green"       end
+			if WXP_Settings.Blip == 14 then WXP_Settings.blip.texture = "diamond"         end
+			if WXP_Settings.Blip == 15 then WXP_Settings.blip.texture = "dot-white-blue2" end
+			
+			if WXP_Settings.Blip == 16 then WXP_Settings.blip.texture = "gold"            end
+			if WXP_Settings.Blip == 17 then WXP_Settings.blip.texture = "loot"            end
+			if WXP_Settings.Blip == 18 then WXP_Settings.blip.texture = "alliancehorde"   end
+			if WXP_Settings.Blip == 19 then WXP_Settings.blip.texture = "book"            end
+			if WXP_Settings.Blip == 20 then WXP_Settings.blip.texture = "flight"          end
+			if WXP_Settings.Blip == 21 then WXP_Settings.blip.texture = "inn"             end
+			if WXP_Settings.Blip == 22 then WXP_Settings.blip.texture = "hearthstone"     end
+			if WXP_Settings.Blip == 23 then WXP_Settings.blip.texture = "mail"            end
+			
+			if WXP_Settings.Blip == 24 then WXP_Settings.blip.texture = "poison"          end
+			if WXP_Settings.Blip == 25 then WXP_Settings.blip.texture = "book2"           end
+			if WXP_Settings.Blip == 26 then WXP_Settings.blip.texture = "stone"           end
+			if WXP_Settings.Blip == 27 then WXP_Settings.blip.texture = "anvil"           end
+			if WXP_Settings.Blip == 28 then WXP_Settings.blip.texture = "exc-gray"        end
+			if WXP_Settings.Blip == 29 then WXP_Settings.blip.texture = "skull"           end
+			
+			if WXP_Settings.Blip == 30 then WXP_Settings.blip.texture = "raid-star"       end
+			if WXP_Settings.Blip == 31 then WXP_Settings.blip.texture = "raid-circle"     end
+			if WXP_Settings.Blip == 32 then WXP_Settings.blip.texture = "raid-diamond"    end
+			if WXP_Settings.Blip == 33 then WXP_Settings.blip.texture = "raid-triangle"   end
+			if WXP_Settings.Blip == 34 then WXP_Settings.blip.texture = "raid-moon"       end
+			if WXP_Settings.Blip == 35 then WXP_Settings.blip.texture = "raid-square"     end
+			if WXP_Settings.Blip == 36 then WXP_Settings.blip.texture = "raid-cross"      end
+			if WXP_Settings.Blip == 37 then WXP_Settings.blip.texture = "raid-skull"      end
+			
 			WXP_Settings.Blip = nil
 		end
 		
@@ -485,10 +478,9 @@ end
 
 --- UI events ---
 
-function WXP.InitializeWidgets()		-- Initialize options panel widgets
+function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP.Debug("Initializing widgets")
 	
-	WXP.UpdateBlipSelector(WXP_Settings.blip.id)
 	WXP_OptBut_Show:SetChecked(WXP_Settings.blip.show)
 	WXP_OptBut_ShowLabels:SetChecked(WXP_Settings.label.show)
 	
@@ -528,9 +520,93 @@ function WXP.InitializeWidgets()		-- Initialize options panel widgets
 	WXP_OptBut_ShowRealm1:SetChecked(WXP_Settings.label.showrealm == "never")
 	WXP_OptBut_ShowRealm2:SetChecked(WXP_Settings.label.showrealm == "different")
 	WXP_OptBut_ShowRealm3:SetChecked(WXP_Settings.label.showrealm == "always")
+	
+	
+	
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\MapQuestHub_Icon32.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\MiniMap-PositionArrows.blp", -0.5, 1.5)
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\MiniMap-QuestArrow.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\TempleofKotmogu_ball_cyan.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\TempleofKotmogu_ball_green.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\TempleofKotmogu_ball_orange.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\TempleofKotmogu_ball_purple.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\UI-Minimap-ZoomInButton-Up.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\UI-Minimap-ZoomOutButton-Up.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\Vehicle-Air-Occupied.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\Vehicle-Ground-Occupied.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\Vehicle-GrummleConvoy.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\Vehicle-SilvershardMines-Arrow.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\TRACKING\\Focus.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\TRACKING\\POIArrow.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\TRACKING\\QuestBlob.blp")
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\TRACKING\\Target.blp")
+	
+	--																x1		x2		y1		y2
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.625,	0.75,	0,		0.25)	-- Flat color circles
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.375,	0.5,	0,		0.25)
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.25,	0.375,	0,		0.25)
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.875,	1,		0,		0.25)
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.5,	0.625,	0,		0.25)
+	
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.625,	0.75,	0.5,	0.75)	-- Dotted color circles
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.375,	0.5,	0.5,	0.75)
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.25,	0.375,	0.5,	0.75)
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.875,	1,		0.5,	0.75)
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.5,	0.625,	0.5,	0.75)
+	
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.625,	0.75,	0.375,	0.5)	-- Skull
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.125,	0.25,	0.125,	0.25)	-- Exclamation Mark
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.125, 	0.25,	0.5,	0.625)	-- Gear
+	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.25, 	0.375,	0.5,	0.625)	-- Speech Bubble
+	
+	
+	--[[
+	
+	WXPBlipButton.new("dot-white-blue")
+	WXPBlipButton.new("dot-white-blue2")
+	WXPBlipButton.new("dot-white-red")
+	WXPBlipButton.new("dot-white-gold")
+	WXPBlipButton.new("dot-white-green")
+	WXPBlipButton.new("dot-gold-red")
+	WXPBlipButton.new("dot-gold-gold")
+	WXPBlipButton.new("dot-gold-green")
+	
+	WXPBlipButton.new("raid-star")
+	WXPBlipButton.new("raid-circle")
+	WXPBlipButton.new("raid-diamond")
+	WXPBlipButton.new("raid-triangle")
+	WXPBlipButton.new("raid-moon")
+	WXPBlipButton.new("raid-square")
+	WXPBlipButton.new("raid-cross")
+	WXPBlipButton.new("raid-skull")
+	
+	WXPBlipButton.new("exc-gold")
+	WXPBlipButton.new("exc-blue")
+	WXPBlipButton.new("exc-green")
+	WXPBlipButton.new("exc-gray")
+	WXPBlipButton.new("question-gold")
+	WXPBlipButton.new("question-blue")
+	WXPBlipButton.new("diamond")
+	WXPBlipButton.new("skull")
+	
+	WXPBlipButton.new("book")
+	WXPBlipButton.new("book2")
+	WXPBlipButton.new("flight")
+	WXPBlipButton.new("inn")
+	WXPBlipButton.new("hearthstone")
+	WXPBlipButton.new("mail")
+	WXPBlipButton.new("poison")
+	WXPBlipButton.new("stone")
+	
+	WXPBlipButton.new("anvil")
+	WXPBlipButton.new("gold")
+	WXPBlipButton.new("loot")
+	WXPBlipButton.new("alliancehorde")
+	]]
+	
 end
 
-function WXP.OnBlipMouseEnter()			-- Fired when mouse enters a blip
+function WXP.OnBlipMouseEnter()					-- Fired when mouse enters a blip
 	local id = GetMouseFocus():GetID()
 	local marker = WXPMarker.instances[id]
 	
@@ -547,29 +623,13 @@ function WXP.OnBlipMouseEnter()			-- Fired when mouse enters a blip
 	GameTooltip:AddLine("Level "..level)
 	GameTooltip:AddLine("XP: "..WXP.format_thousand(xp).." / "..WXP.format_thousand(xpmax).." ("..pct.."%)")
 	GameTooltip:Show()
-	
-	--[[
-	for i,mrk in ipairs(WXPMarker.instances) do
-		mrk.blip.fontstring:Hide()
-	end
-	
-	marker.blip.fontstring:Show()
-	]]
 end
 
-function WXP.OnBlipMouseLeave()			-- Fired when mouse leaves a blip
+function WXP.OnBlipMouseLeave()					-- Fired when mouse leaves a blip
 	GameTooltip:Hide()
-	
-	--[[
-	if WXP_Settings.label.show then
-		for i,marker in ipairs(WXPMarker.instances) do
-			marker.blip.fontstring:Show()
-		end
-	end
-	]]
 end
 
-function WXP.OnOptionsLoaded(self)		-- Initialize Options panel
+function WXP.OnOptionsLoaded(self)				-- Initialize Options panel
 	if self:GetName() == "WXP_Options" then
 		self.name = "WatchXP"
 		self.default = WXP.OnDefaultsClicked
@@ -582,12 +642,14 @@ function WXP.OnOptionsLoaded(self)		-- Initialize Options panel
 	end
 end
 
-function WXP.OnOptionsShown()			-- Fired when options panel opens
+function WXP.OnOptionsShown()					-- Fired when options panel opens
 	if not WXP_Settings then return end
-	WXPMarker.new({name="Example!", realm="RealmName", level=1, xp=1, xpmax=4})
+	if WXPMarker.Count() == 0 then
+		WXPMarker.new({name="Example!", realm="RealmName", level=1, xp=1, xpmax=4})
+	end
 end
 
-function WXP.OnOptionsHidden()			-- Fired when options panel closes
+function WXP.OnOptionsHidden()					-- Fired when options panel closes
 	if not WXP_Settings then return end
 	
 	local marker = WXPMarker.Find("Example!", "RealmName")
@@ -596,7 +658,7 @@ function WXP.OnOptionsHidden()			-- Fired when options panel closes
 	end
 end
 
-function WXP.OnWidgetUsed(self)			-- Fired when an options panel widget (button, slider, etc.) is used
+function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (button, slider, etc.) is used
 	if not WXP_Settings then return end
 	
 	if self:GetObjectType() ~= "Slider" then
@@ -704,28 +766,28 @@ function WXP.OnWidgetUsed(self)			-- Fired when an options panel widget (button,
 	WXPMarker.RedrawAll()
 end
 
-function WXP.OnBlipSelected(self,id)	-- Fired when a blip button is clicked
+function WXP.OnBlipSelected(self,id)			-- Fired when a blip button is clicked
 	WXP_Settings.blip.id = id
 	WXP.UpdateBlipSelector(id)
 	WXPMarker.RedrawAll()
 end
 
-function WXP.OnColorPickerChanged()		-- Fired when color picker is changed
+function WXP.OnColorPickerChanged()				-- Fired when color picker is changed
 	WXP_Settings.label.color.r, WXP_Settings.label.color.g, WXP_Settings.label.color.b = ColorPickerFrame:GetColorRGB()
 	WXP_Settings.label.color.a = 1 - OpacitySliderFrame:GetValue()
 	WXPMarker.RedrawAll()
 end
 
-function WXP.OnColorPickerCanceled(prevValues) -- Fired when the color picker is closed with "Cancel"
+function WXP.OnColorPickerCanceled(prevValues) 	-- Fired when the color picker is closed with "Cancel"
 	WXP_Settings.label.color = prevValues
 	WXPMarker.RedrawAll()
 end
 
-function WXP.OnSliderScroll(slider, delta) -- Fired when a slider is scrolled with the mouse wheel
+function WXP.OnSliderScroll(slider, delta) 		-- Fired when a slider is scrolled with the mouse wheel
 	slider:SetValue(slider:GetValue() + delta)
 end
 
-function WXP.OnDefaultsClicked()		-- Reset all settings to default when "Defaults" button is clicked
+function WXP.OnDefaultsClicked()				-- Reset all settings to default when "Defaults" button is clicked
 	WXP.Debug("Defaults button clicked")
 	
 	local debug_enabled = WXP_Settings.debug
@@ -738,7 +800,7 @@ end
 
 --- UI functions ---
 
-function WXP.ShowColorPicker()			-- Show the color picker
+function WXP.ShowColorPicker()					-- Show the color picker
 	local r = WXP_Settings.label.color.r
 	local g = WXP_Settings.label.color.g
 	local b = WXP_Settings.label.color.b
@@ -754,52 +816,9 @@ function WXP.ShowColorPicker()			-- Show the color picker
 	ColorPickerFrame:Show();
 end
 
-function WXP.UpdateBlipSelector(id)		-- Initialize blip buttons (hide all, show given id)
-	local disabled_alpha = "0.6"
-	WXP_OptBut_Icon0:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon1:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon2:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon3:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon4:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon5:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon6:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon7:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon8:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon9:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon10:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon11:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon12:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon13:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon14:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon15:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon16:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon17:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon18:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon19:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon20:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon21:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon22:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon23:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon24:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon25:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon26:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon27:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon28:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon29:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon30:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon31:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon32:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon33:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon34:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon35:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon36:SetAlpha(disabled_alpha)
-	WXP_OptBut_Icon37:SetAlpha(disabled_alpha)
-	_G["WXP_OptBut_Icon"..id]:SetAlpha("0")
-end
-
 --- Miscellaneous functions ---
 
-function WXP.format_thousand(v)			-- Adds thousands-separator (,) to a number
+function WXP.format_thousand(v)					-- Adds thousands-separator (,) to a number
 	local s = string.format("%d", math.floor(v))
 	local pos = string.len(s) % 3
 	if pos == 0 then pos = 3 end
@@ -808,7 +827,7 @@ function WXP.format_thousand(v)			-- Adds thousands-separator (,) to a number
 		.. string.sub(string.format("%.0f", v - math.floor(v)), 2)
 end
 
-function WXP.deepcopy(orig)				-- Clones a table
+function WXP.deepcopy(orig)						-- Clones a table
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
@@ -823,7 +842,7 @@ function WXP.deepcopy(orig)				-- Clones a table
     return copy
 end
 
-function WXP.print_r (t, indent, done)	-- Prints a table and all its values
+function WXP.print_r (t, indent, done)			-- Prints a table and all its values
   done = done or {}
   indent = indent or ''
   local nextIndent -- Storage for next indentation value
@@ -843,13 +862,13 @@ function WXP.print_r (t, indent, done)	-- Prints a table and all its values
   end
 end
 
-function WXP.add(pct, name)				-- Debug function to add or update a marker
+function WXP.add(pct, name)						-- Debug function to add or update a marker
 	pct = pct or 25
 	name = name or "Marker"
 	local marker = WXPMarker.new({name=name, realm="Test", xp=pct, xpmax=100, level=10})
 end
 
-function WXP.pop()						-- Debug function to add a bunch of markers
+function WXP.pop()								-- Debug function to add a bunch of markers
 	WXP.add(25, "1")
 	WXP.add(40, "2")
 	WXP.add(35, "3")
