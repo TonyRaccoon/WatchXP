@@ -125,6 +125,21 @@
 					<OnClick>WXP_OptBut_OffsetY:SetValue(0)</OnClick>
 				</Scripts>
 			</Button>
+			
+			<Button name="WXP_OptBut_OpenLabels" inherits="UIPanelButtonTemplate" text="Label Settings">
+				<Size><AbsDimension x="128" y="32"/></Size>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" relativeTo="WXP_Options" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="10" y="10"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						InterfaceOptionsFrame_OpenToCategory(WXP_Options_Label)
+						InterfaceOptionsFrame_OpenToCategory(WXP_Options_Label) -- Due to a blizzard bug, need to call twice
+					</OnClick>
+				</Scripts>
+			</Button>
 		</Frames>
 	</Frame>
 	
@@ -163,7 +178,7 @@
 				<FontString name="WXP_Opt_FontSize" text="Font Size" inherits="GameFontNormal" justifyH="CENTER" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
-							<Offset><AbsDimension x="0" y="-160"/></Offset>
+							<Offset><AbsDimension x="0" y="-172"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -171,7 +186,7 @@
 				<FontString name="WXP_Opt_LabelOffset" text="Vertical Offset" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
-							<Offset><AbsDimension x="0" y="-220"/></Offset>
+							<Offset><AbsDimension x="0" y="-232"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -179,7 +194,7 @@
 				<FontString name="WXP_Opt_ShowLevel" text="Show Level in Label:" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
-							<Offset><AbsDimension x="0" y="-290"/></Offset>
+							<Offset><AbsDimension x="0" y="-302"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -187,7 +202,7 @@
 				<FontString name="WXP_Opt_ShowRealm" text="Show Realm in Label:" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
-							<Offset><AbsDimension x="0" y="-360"/></Offset>
+							<Offset><AbsDimension x="0" y="-372"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -216,47 +231,62 @@
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "friz" and 1 or 0) end</OnShow>
-					<OnLoad>_G[self:GetName().."Text"]:SetText("Friz Quadrata")</OnLoad>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\FRIZQT__.TTF" and 1 or 0) end</OnShow>
+					<OnLoad>
+						_G[self:GetName().."Text"]:SetText("Friz Quadrata")
+						_G[self:GetName().."Text"]:SetFont("Fonts\\FRIZQT__.TTF", 12)
+					</OnLoad>
 					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
 				</Scripts>
 			</Checkbutton>
+			
 			<Checkbutton name="WXP_OptBut_Font2" inherits="SendMailRadioButtonTemplate" id="1">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
-						<Offset><AbsDimension x="12" y="-16"/></Offset>
+						<Offset><AbsDimension x="12" y="-20"/></Offset>
 					</Anchor>
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "arial" and 1 or 0) end</OnShow>
-					<OnLoad>_G[self:GetName().."Text"]:SetText("Arial")</OnLoad>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\ARIALN.TTF" and 1 or 0) end</OnShow>
+					<OnLoad>
+						_G[self:GetName().."Text"]:SetText("Arial")
+						_G[self:GetName().."Text"]:SetFont("Fonts\\ARIALN.TTF", 12)
+					</OnLoad>
 					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
 				</Scripts>
 			</Checkbutton>
+			
 			<Checkbutton name="WXP_OptBut_Font3" inherits="SendMailRadioButtonTemplate" id="1">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
-						<Offset><AbsDimension x="12" y="-28"/></Offset>
+						<Offset><AbsDimension x="12" y="-36"/></Offset>
 					</Anchor>
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "morpheus" and 1 or 0) end</OnShow>
-					<OnLoad>_G[self:GetName().."Text"]:SetText("Morpheus")</OnLoad>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\MORPHEUS.TTF" and 1 or 0) end</OnShow>
+					<OnLoad>
+						_G[self:GetName().."Text"]:SetText("Morpheus")
+						_G[self:GetName().."Text"]:SetFont("Fonts\\MORPHEUS.TTF", 12)
+					</OnLoad>
 					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
 				</Scripts>
 			</Checkbutton>
+			
 			<Checkbutton name="WXP_OptBut_Font4" inherits="SendMailRadioButtonTemplate" id="1">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
-						<Offset><AbsDimension x="12" y="-40"/></Offset>
+						<Offset><AbsDimension x="12" y="-52"/></Offset>
 					</Anchor>
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "skurri" and 1 or 0) end</OnShow>
-					<OnLoad>_G[self:GetName().."Text"]:SetText("Skurri")</OnLoad>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\SKURRI.TTF" and 1 or 0) end</OnShow>
+					<OnLoad>
+						_G[self:GetName().."Text"]:SetText("Skurri")
+						_G[self:GetName().."Text"]:SetFont("Fonts\\SKURRI.TTF", 12)
+					</OnLoad>
 					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
 				</Scripts>
 			</Checkbutton>

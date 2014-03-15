@@ -100,6 +100,21 @@ function WXPBlipButton.All()						-- Returns an iterator containing all WXPBlipB
 	end
 end
 
+function WXPBlipButton.Update()						-- Update the display and highlight the selected texture
+	for button in WXPBlipButton.All() do
+		if button.texturename == WXP_Settings.blip.texture
+		and button.texoffset.x1 == WXP_Settings.blip.texoffset.x1 and button.texoffset.y1 == WXP_Settings.blip.texoffset.y1
+		and button.texoffset.x2 == WXP_Settings.blip.texoffset.x2 and button.texoffset.y2 == WXP_Settings.blip.texoffset.y2 then
+			WXP.Debug("true")
+			button.active = true
+			button.frame:SetAlpha(1)
+		else
+			button.active = false
+			button.frame:SetAlpha(WXPBlipButton.inactiveAlpha)
+		end
+	end
+end
+
 ----- Instance methods -----
 
 function WXPBlipButton:OnClick(button)				-- Fired when the button is clicked

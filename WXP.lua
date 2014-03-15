@@ -8,13 +8,13 @@ WXP.default_settings = {
 	
 	blip = {
 		show = true,
-		size = 32,
-		texture = "",
+		size = 24,
+		texture = "INTERFACE\\MINIMAP\\UI-Minimap-ZoomInButton-Up.blp",
 		
 		texoffset = {
 			x1 = 0,
-			x2 = 0,
-			y1 = 1,
+			x2 = 1,
+			y1 = 0,
 			y2 = 1
 		},
 		
@@ -29,7 +29,7 @@ WXP.default_settings = {
 		showrealm = "different",
 		
 		offset = {
-			y = 0
+			y = 16
 		},
 		
 		color = {
@@ -40,8 +40,8 @@ WXP.default_settings = {
 		},
 		
 		font = {
-			face = "friz",
-			size = 12
+			face = "Fonts\\ARIALN.TTF",
+			size = 14
 		}
 	}
 }
@@ -95,6 +95,7 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 		
 		-- Initialize UI stuff
 		WXP.InitializeWidgets()
+		WXP.LoadBlipButtons()
 		if not WXP_Settings.blip.show then WXP_Frame:Hide() end
 		
 		-- Blizzard bug: options panel's OnShow doesn't trigger unless we hide it first (even though it starts out hidden)
@@ -192,6 +193,10 @@ function WXP.OnCommand(cmd)						-- Fired when the player enters a command start
 	if cmd == "config" or cmd == "options" or cmd == "settings" or cmd == "opt" or cmd == "cfg" or cmd == "win" then
 		InterfaceOptionsFrame_OpenToCategory("WatchXP")
 		InterfaceOptionsFrame_OpenToCategory("WatchXP") -- The first call to OpenToCategory after login/reloadui doesn't work properly due to a blizzard bug
+	
+	elseif cmd == "label" or cmd == "labels" then
+		InterfaceOptionsFrame_OpenToCategory(WXP_Options_Label)
+		InterfaceOptionsFrame_OpenToCategory(WXP_Options_Label) -- The first call to OpenToCategory after login/reloadui doesn't work properly due to a blizzard bug
 	
 	elseif cmd == "toggle" then
 		WXP.ToggleDisplay()
@@ -379,49 +384,45 @@ function WXP.ImportOlderSettings()				-- Upgrades older versions of settings
 		end
 		
 		if WXP_Settings.Blip then
-			if WXP_Settings.Blip == 0  then WXP_Settings.blip.texture = "dot-white-blue"  end
-			if WXP_Settings.Blip == 1  then WXP_Settings.blip.texture = "dot-white-blue2" end
-			if WXP_Settings.Blip == 2  then WXP_Settings.blip.texture = "dot-white-red"   end
-			if WXP_Settings.Blip == 3  then WXP_Settings.blip.texture = "dot-white-gold"  end
-			if WXP_Settings.Blip == 4  then WXP_Settings.blip.texture = "dot-white-green" end
-			if WXP_Settings.Blip == 5  then WXP_Settings.blip.texture = "dot-gold-red"    end
-			if WXP_Settings.Blip == 6  then WXP_Settings.blip.texture = "dot-gold-gold"   end
-			if WXP_Settings.Blip == 7  then WXP_Settings.blip.texture = "dot-gold-green"  end
+			local id = WXP_Settings.Blip
+			local x1, x2, y1, y2, texture = 0, 1, 0, 1
 			
-			if WXP_Settings.Blip == 8  then WXP_Settings.blip.texture = "dot-gold-gold"   end
-			if WXP_Settings.Blip == 9  then WXP_Settings.blip.texture = "exc-gold"        end
-			if WXP_Settings.Blip == 10 then WXP_Settings.blip.texture = "question-gold"   end
-			if WXP_Settings.Blip == 11 then WXP_Settings.blip.texture = "exc-blue"        end
-			if WXP_Settings.Blip == 12 then WXP_Settings.blip.texture = "question-blue"   end
-			if WXP_Settings.Blip == 13 then WXP_Settings.blip.texture = "exc-green"       end
-			if WXP_Settings.Blip == 14 then WXP_Settings.blip.texture = "diamond"         end
-			if WXP_Settings.Blip == 15 then WXP_Settings.blip.texture = "dot-white-blue2" end
+			if     id == 0
+				or id == 1
+				or id == 15 then texture,x1,x2,y1,y2 = "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP", .875, 1, 0, .25 -- Blue dot
 			
-			if WXP_Settings.Blip == 16 then WXP_Settings.blip.texture = "gold"            end
-			if WXP_Settings.Blip == 17 then WXP_Settings.blip.texture = "loot"            end
-			if WXP_Settings.Blip == 18 then WXP_Settings.blip.texture = "alliancehorde"   end
-			if WXP_Settings.Blip == 19 then WXP_Settings.blip.texture = "book"            end
-			if WXP_Settings.Blip == 20 then WXP_Settings.blip.texture = "flight"          end
-			if WXP_Settings.Blip == 21 then WXP_Settings.blip.texture = "inn"             end
-			if WXP_Settings.Blip == 22 then WXP_Settings.blip.texture = "hearthstone"     end
-			if WXP_Settings.Blip == 23 then WXP_Settings.blip.texture = "mail"            end
+			elseif id == 2
+				or id == 5  then texture,x1,x2,y1,y2 = "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",.625,.75, 0,.25  -- Red dot
 			
-			if WXP_Settings.Blip == 24 then WXP_Settings.blip.texture = "poison"          end
-			if WXP_Settings.Blip == 25 then WXP_Settings.blip.texture = "book2"           end
-			if WXP_Settings.Blip == 26 then WXP_Settings.blip.texture = "stone"           end
-			if WXP_Settings.Blip == 27 then WXP_Settings.blip.texture = "anvil"           end
-			if WXP_Settings.Blip == 28 then WXP_Settings.blip.texture = "exc-gray"        end
-			if WXP_Settings.Blip == 29 then WXP_Settings.blip.texture = "skull"           end
+			elseif id == 3
+				or id == 6
+				or id == 8  then texture,x1,x2,y1,y2 = "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",.375,.5,  0,.25  -- Yellow dot
 			
-			if WXP_Settings.Blip == 30 then WXP_Settings.blip.texture = "raid-star"       end
-			if WXP_Settings.Blip == 31 then WXP_Settings.blip.texture = "raid-circle"     end
-			if WXP_Settings.Blip == 32 then WXP_Settings.blip.texture = "raid-diamond"    end
-			if WXP_Settings.Blip == 33 then WXP_Settings.blip.texture = "raid-triangle"   end
-			if WXP_Settings.Blip == 34 then WXP_Settings.blip.texture = "raid-moon"       end
-			if WXP_Settings.Blip == 35 then WXP_Settings.blip.texture = "raid-square"     end
-			if WXP_Settings.Blip == 36 then WXP_Settings.blip.texture = "raid-cross"      end
-			if WXP_Settings.Blip == 37 then WXP_Settings.blip.texture = "raid-skull"      end
+			elseif id == 4
+				or id == 7  then texture,x1,x2,y1,y2 = "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",.25, .375,0,.25  -- Green dot
 			
+			elseif id == 9
+				or id == 10
+				or id == 11
+				or id == 12
+				or id == 13
+				or id == 28  then texture,x1,x2,y1,y2 = "INTERFACE\\MINIMAP\\OBJECTICONS.BLP",.125,.25,.125,.25 -- Gold exclamation mark
+			
+			elseif id == 30  then texture,x1,x2,y1,y2 = "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",0,  .25,0,  .25 -- Raid star
+			elseif id == 31  then texture,x1,x2,y1,y2 = "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",.25,.5, 0,  .25 -- Raid circle
+			elseif id == 32  then texture,x1,x2,y1,y2 = "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",.5, .75,0,  .25 -- Raid diamond
+			elseif id == 33  then texture,x1,x2,y1,y2 = "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",.75,1,  0,  .25 -- Raid triangle
+			elseif id == 34  then texture,x1,x2,y1,y2 = "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",0,  .25,.25,.5  -- Raid moon
+			elseif id == 35  then texture,x1,x2,y1,y2 = "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",.25,.5, .25,.5  -- Raid square
+			elseif id == 36  then texture,x1,x2,y1,y2 = "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",.5, .75,.25,.5  -- Raid cross
+			
+			elseif id == 29
+				or id == 37 then texture,x1,x2,y1,y2 = "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",.75,1,  .25,.5  -- Raid skull
+			
+			end
+			
+			WXP_Settings.blip.texture = texture
+			WXP_Settings.blip.texoffset = {x1=x1, x2=x2, y1=y1, y2=y2}
 			WXP_Settings.Blip = nil
 		end
 		
@@ -446,13 +447,13 @@ function WXP.ImportOlderSettings()				-- Upgrades older versions of settings
 			WXP_Settings.label.font.size = WXP_Settings.Font.Size
 			
 			if WXP_Settings.Font.Face == 1 then
-				WXP_Settings.label.font.face = "friz"
+				WXP_Settings.label.font.face = "Fonts\\FRIZQT__.TTF"
 			elseif WXP_Settings.Font.Face == 1 then
-				WXP_Settings.label.font.face = "arial"
+				WXP_Settings.label.font.face = "Fonts\\ARIALN.TTF"
 			elseif WXP_Settings.Font.Face == 1 then
-				WXP_Settings.label.font.face = "morpheus"
+				WXP_Settings.label.font.face = "Fonts\\MORPHEUS.TTF"
 			elseif WXP_Settings.Font.Face == 1 then
-				WXP_Settings.label.font.face = "skurri"
+				WXP_Settings.label.font.face = "Fonts\\SKURRI.TTF"
 			end
 			
 			WXP_Settings.Font = nil
@@ -469,7 +470,7 @@ function WXP.ImportOlderSettings()				-- Upgrades older versions of settings
 	end
 end
 
---- UI events ---
+--- UI functions ---
 
 function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP.Debug("Initializing widgets")
@@ -501,10 +502,10 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP_OptBut_BlipSizeHigh:SetText("64")
 	WXP_OptBut_BlipSizeText:SetText(WXP_OptBut_BlipSize:GetValue())
 	
-	WXP_OptBut_Font1:SetChecked(WXP_Settings.label.font.face == "friz")
-	WXP_OptBut_Font2:SetChecked(WXP_Settings.label.font.face == "arial")
-	WXP_OptBut_Font3:SetChecked(WXP_Settings.label.font.face == "morpheus")
-	WXP_OptBut_Font4:SetChecked(WXP_Settings.label.font.face == "skurri")
+	WXP_OptBut_Font1:SetChecked(WXP_Settings.label.font.face == "Fonts\\FRIZQT__.TTF")
+	WXP_OptBut_Font2:SetChecked(WXP_Settings.label.font.face == "Fonts\\ARIALN.TTF")
+	WXP_OptBut_Font3:SetChecked(WXP_Settings.label.font.face == "Fonts\\MORPHEUS.TTF")
+	WXP_OptBut_Font4:SetChecked(WXP_Settings.label.font.face == "Fonts\\SKURRI.TTF")
 	
 	WXP_OptBut_ShowLevel1:SetChecked(WXP_Settings.label.showlevel == "never")
 	WXP_OptBut_ShowLevel2:SetChecked(WXP_Settings.label.showlevel == "different")
@@ -513,9 +514,9 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP_OptBut_ShowRealm1:SetChecked(WXP_Settings.label.showrealm == "never")
 	WXP_OptBut_ShowRealm2:SetChecked(WXP_Settings.label.showrealm == "different")
 	WXP_OptBut_ShowRealm3:SetChecked(WXP_Settings.label.showrealm == "always")
-	
-	
-	
+end
+
+function WXP.LoadBlipButtons()					-- Initialize blip buttons
 	WXPBlipButton.new("INTERFACE\\MINIMAP\\MapQuestHub_Icon32.blp")
 	WXPBlipButton.new("INTERFACE\\MINIMAP\\MiniMap-PositionArrows.blp", -0.5, 1.5)
 	WXPBlipButton.new("INTERFACE\\MINIMAP\\MiniMap-QuestArrow.blp")
@@ -552,52 +553,33 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.125, 	0.25,	0.5,	0.625)	-- Gear
 	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.25, 	0.375,	0.5,	0.625)	-- Speech Bubble
 	
-	
-	--[[
-	
-	WXPBlipButton.new("dot-white-blue")
-	WXPBlipButton.new("dot-white-blue2")
-	WXPBlipButton.new("dot-white-red")
-	WXPBlipButton.new("dot-white-gold")
-	WXPBlipButton.new("dot-white-green")
-	WXPBlipButton.new("dot-gold-red")
-	WXPBlipButton.new("dot-gold-gold")
-	WXPBlipButton.new("dot-gold-green")
-	
-	WXPBlipButton.new("raid-star")
-	WXPBlipButton.new("raid-circle")
-	WXPBlipButton.new("raid-diamond")
-	WXPBlipButton.new("raid-triangle")
-	WXPBlipButton.new("raid-moon")
-	WXPBlipButton.new("raid-square")
-	WXPBlipButton.new("raid-cross")
-	WXPBlipButton.new("raid-skull")
-	
-	WXPBlipButton.new("exc-gold")
-	WXPBlipButton.new("exc-blue")
-	WXPBlipButton.new("exc-green")
-	WXPBlipButton.new("exc-gray")
-	WXPBlipButton.new("question-gold")
-	WXPBlipButton.new("question-blue")
-	WXPBlipButton.new("diamond")
-	WXPBlipButton.new("skull")
-	
-	WXPBlipButton.new("book")
-	WXPBlipButton.new("book2")
-	WXPBlipButton.new("flight")
-	WXPBlipButton.new("inn")
-	WXPBlipButton.new("hearthstone")
-	WXPBlipButton.new("mail")
-	WXPBlipButton.new("poison")
-	WXPBlipButton.new("stone")
-	
-	WXPBlipButton.new("anvil")
-	WXPBlipButton.new("gold")
-	WXPBlipButton.new("loot")
-	WXPBlipButton.new("alliancehorde")
-	]]
-	
+	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0, 		0.25,	0,		0.25)	-- Raid icons
+	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.25, 	0.5,	0,		0.25)
+	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.5, 	0.75,	0,		0.25)
+	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.75, 	1,		0,		0.25)
+	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0, 		0.25,	0.25,	0.5)
+	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.25, 	0.5,	0.25,	0.5)
+	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.5, 	0.75,	0.25,	0.5)
+	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.75, 	1,		0.25,	0.5)
 end
+
+function WXP.ShowColorPicker()					-- Show the color picker
+	local r = WXP_Settings.label.color.r
+	local g = WXP_Settings.label.color.g
+	local b = WXP_Settings.label.color.b
+	local a = WXP_Settings.label.color.a
+	ColorPickerFrame.hasOpacity = true;
+	ColorPickerFrame.opacity = 1 - a;
+	ColorPickerFrame:SetColorRGB(r,g,b);
+	ColorPickerFrame.previousValues = {r=r, g=g, b=b, a=a}
+	ColorPickerFrame.func = WXP.OnColorPickerChanged
+	ColorPickerFrame.opacityFunc = WXP.OnColorPickerChanged
+	ColorPickerFrame.cancelFunc = WXP.OnColorPickerCanceled
+	
+	ColorPickerFrame:Show();
+end
+
+--- UI events ---
 
 function WXP.OnBlipMouseEnter()					-- Fired when mouse enters a blip
 	local id = GetMouseFocus():GetID()
@@ -715,28 +697,28 @@ function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (butto
 	--- End ShowRealm ---
 	
 	elseif self:GetName() == "WXP_OptBut_Font1" then		-- Friz Quadrata
-		WXP_Settings.label.font.face = "friz"
+		WXP_Settings.label.font.face = "Fonts\\FRIZQT__.TTF"
 		WXP_OptBut_Font1:SetChecked(1)
 		WXP_OptBut_Font2:SetChecked(nil)
 		WXP_OptBut_Font3:SetChecked(nil)
 		WXP_OptBut_Font4:SetChecked(nil)
 	
 	elseif self:GetName() == "WXP_OptBut_Font2" then		-- Arial
-		WXP_Settings.label.font.face = "arial"
+		WXP_Settings.label.font.face = "Fonts\\ARIALN.TTF"
 		WXP_OptBut_Font1:SetChecked(nil)
 		WXP_OptBut_Font2:SetChecked(1)
 		WXP_OptBut_Font3:SetChecked(nil)
 		WXP_OptBut_Font4:SetChecked(nil)
 	
 	elseif self:GetName() == "WXP_OptBut_Font3" then		-- Morpheus
-		WXP_Settings.label.font.face = "morpheus"
+		WXP_Settings.label.font.face = "Fonts\\MORPHEUS.TTF"
 		WXP_OptBut_Font1:SetChecked(nil)
 		WXP_OptBut_Font2:SetChecked(nil)
 		WXP_OptBut_Font3:SetChecked(1)
 		WXP_OptBut_Font4:SetChecked(nil)
 	
 	elseif self:GetName() == "WXP_OptBut_Font4" then		-- Skurri
-		WXP_Settings.label.font.face = "skurri"
+		WXP_Settings.label.font.face = "Fonts\\SKURRI.TTF"
 		WXP_OptBut_Font1:SetChecked(nil)
 		WXP_OptBut_Font2:SetChecked(nil)
 		WXP_OptBut_Font3:SetChecked(nil)
@@ -788,25 +770,8 @@ function WXP.OnDefaultsClicked()				-- Reset all settings to default when "Defau
 	if debug_enabled then WXP_Settings.debug = true end
 	WXP_Settings.version = WXP.version
 	WXP.InitializeWidgets()
+	WXPBlipButton.Update()
 	WXPMarker.RedrawAll()
-end
-
---- UI functions ---
-
-function WXP.ShowColorPicker()					-- Show the color picker
-	local r = WXP_Settings.label.color.r
-	local g = WXP_Settings.label.color.g
-	local b = WXP_Settings.label.color.b
-	local a = WXP_Settings.label.color.a
-	ColorPickerFrame.hasOpacity = true;
-	ColorPickerFrame.opacity = 1 - a;
-	ColorPickerFrame:SetColorRGB(r,g,b);
-	ColorPickerFrame.previousValues = {r=r, g=g, b=b, a=a}
-	ColorPickerFrame.func = WXP.OnColorPickerChanged
-	ColorPickerFrame.opacityFunc = WXP.OnColorPickerChanged
-	ColorPickerFrame.cancelFunc = WXP.OnColorPickerCanceled
-	
-	ColorPickerFrame:Show();
 end
 
 --- Miscellaneous functions ---
@@ -835,7 +800,7 @@ function WXP.deepcopy(orig)						-- Clones a table
     return copy
 end
 
-function WXP.print_r (t, indent, done)			-- Prints a table and all its values
+function WXP.print_r(t, indent, done)			-- Prints a table and all its values
   done = done or {}
   indent = indent or ''
   local nextIndent -- Storage for next indentation value
