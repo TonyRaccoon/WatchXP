@@ -99,7 +99,7 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 	
 	elseif event == "CHAT_MSG_ADDON" then
 		local addonName, args, channel, sender = ...;
-		WXP.Debug("|cffcccccc[AddonMessage]|r|cffaaaaaa", args)
+		WXP.Debug("|cffcccccc[AddonMessage]|r|cffaaaaaa", addonName, args, channel, sender)
 		if sender == UnitName("player").."-"..GetRealmName("player") then return end -- Ignore messages from ourselves
 		local msgArgs = {strsplit(",", args)}
 		
@@ -125,7 +125,7 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 	
 	elseif event == "BN_CHAT_MSG_ADDON" then
 		local addonName, args, channel, sender = ...
-		print(addonName, args, channel, sender)
+		WXP.Debug("|cffcccccc[BNAddonMessage]|r|cffaaaaaa", addonName, args, channel, sender)
 		local msgArgs = {strsplit(",", args)}
 		
 		if msgArgs[1] == "bn-xp" then
@@ -134,8 +134,10 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 			local level = tonumber(msgArgs[4])
 			local xp    = tonumber(msgArgs[5])
 			local xpmax = tonumber(msgArgs[6])
+			WXP.Debug(format("|cff00D9D9<<< Got BN XP: %s %s / %s through %s", WXP.PlayerLink(name,realm), WXP.format_thousand(xp), WXP.format_thousand(xpmax), level))
 			WXPMarker.new({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
 		elseif msgArgs[1] == "bn-req" then
+			WXP.Debug("|cff00D9D9<<< Got BN XP request from:|r "..args)
 			WXP.SendExpToBNFriend(sender)
 		end
 	
@@ -240,16 +242,16 @@ function WXP.PollPlayer(name)					-- Send out XP req to player
 end
 
 function WXP.PollBNFriend(ident)				-- Send out XP req to Battle.net friend
-	if not BNConnected() then WXP.Msg("Must be connected to RealID to use that feature") return end
-	
+	if not BNConnected() then WXP.Msg("You must be connected to Battle.net to use that feature") return end
 	local pid
-	if strmatch(ident," ") then -- ident is first and last name
-		pid = BNet_GetPresenceID(ident)
-	elseif strmatch(ident,"^%d+$") then -- ident is a number
+	if strmatch(ident,"^%d+$") then -- ident is a number
 		pid = BNGetFriendInfo(ident)
+	else
+		pid = GetAutoCompletePresenceID(ident)
 	end
 	
 	if not pid then WXP.Msg("That is not a valid RealID friend") return end
+	WXP.Msg("Sending XP request to "..ident)
 	BNSendGameData(pid, "WXP", "bn-req")
 end
 
