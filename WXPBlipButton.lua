@@ -4,14 +4,15 @@ WXPBlipButton = {}
 WXPBlipButton.instances = {}
 WXPBlipButton.__index = WXPBlipButton
 
-WXPBlipButton.hoverAlpha = 0.6
-WXPBlipButton.inactiveAlpha = 0.3
+WXPBlipButton.hoverAlpha = 0.75
+WXPBlipButton.inactiveAlpha = .5 -- 0.5
 WXPBlipButton.columns = 8
-WXPBlipButton.offset = {x = 0, y = -10}
+WXPBlipButton.offset = {x = 0, y = 10}
+WXPBlipButton.separation = 0
 
------ Class methods -----
+--- Class functions ---
 
-function WXPBlipButton.new(texturename,offx1,offx2,offy1,offy2)	-- Creates a new WXPBlipButton (offx/offy specify position of 32x32 blip in texture)
+function WXPBlipButton.new(posx,posy, texturename,offx1,offx2,offy1,offy2) -- Creates a new WXPBlipButton (offx/offy specify position of 32x32 blip in texture)
 	self = {}
 	setmetatable(self, WXPBlipButton)
 	
@@ -20,7 +21,9 @@ function WXPBlipButton.new(texturename,offx1,offx2,offy1,offy2)	-- Creates a new
 	offy1 = offy1 or 0
 	offy2 = offy2 or 1
 	
-	local x,y = WXPBlipButton.GetNextXY()
+	local x = posx*32 + posx*WXPBlipButton.separation + WXPBlipButton.offset.x
+	local y = -posy*32 - posy*WXPBlipButton.separation - WXPBlipButton.offset.y
+	
 	local id = #WXPBlipButton.instances + 1
 	
 	self.frame = CreateFrame("Frame", "WXP_BS_Frame_" .. id, WXP_Options)
@@ -74,7 +77,7 @@ function WXPBlipButton.GetByFrame(frame)			-- Returns the WXPBlipButton for the 
 	return false
 end
 
-function WXPBlipButton.GetNextXY()					-- Returns the X/Y coordinates the next blip button should be placed at in the options frame
+function WXPBlipButton.GetNextXY()					-- Returns the X/Y coordinates the next blip button should be placed at in the options frame [Currently unused]
 	local buttoncount = #WXPBlipButton.instances
 	
 	local row = math.floor(buttoncount/WXPBlipButton.columns)
@@ -84,8 +87,8 @@ function WXPBlipButton.GetNextXY()					-- Returns the X/Y coordinates the next b
 	local y = row * 32
 	y = y * -1 -- Reverse up/down
 	
-	x = x + WXPBlipButton.offset.x
-	y = y + WXPBlipButton.offset.y
+	x = x + WXPBlipButton.offset.x + (column * WXPBlipButton.separation)
+	y = y - WXPBlipButton.offset.y - (row * WXPBlipButton.separation)
 	
 	return x,y
 end
@@ -100,12 +103,11 @@ function WXPBlipButton.All()						-- Returns an iterator containing all WXPBlipB
 	end
 end
 
-function WXPBlipButton.Update()						-- Update the display and highlight the selected texture
+function WXPBlipButton.UpdateAll()					-- Update the display and highlight the selected texture
 	for button in WXPBlipButton.All() do
 		if button.texturename == WXP_Settings.blip.texture
 		and button.texoffset.x1 == WXP_Settings.blip.texoffset.x1 and button.texoffset.y1 == WXP_Settings.blip.texoffset.y1
 		and button.texoffset.x2 == WXP_Settings.blip.texoffset.x2 and button.texoffset.y2 == WXP_Settings.blip.texoffset.y2 then
-			WXP.Debug("true")
 			button.active = true
 			button.frame:SetAlpha(1)
 		else
@@ -115,7 +117,17 @@ function WXPBlipButton.Update()						-- Update the display and highlight the sel
 	end
 end
 
------ Instance methods -----
+function WXPBlipButton.HighlightAll()				-- Show all at 100% brightness
+	for button in WXPBlipButton.All() do
+		button.frame:SetAlpha(1)
+	end
+end
+
+function WXPBlipButton.UnhighlightAll()				-- Go back to normal brightness
+	WXPBlipButton.UpdateAll()
+end
+
+--- Instance functions ---
 
 function WXPBlipButton:OnClick(button)				-- Fired when the button is clicked
 	if button ~= "LeftButton" then return end -- Only do something on left click

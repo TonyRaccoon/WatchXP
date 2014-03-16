@@ -8,5 +8,6 @@
 WXPBlip.lua
 WXPMarker.lua
 WXPBlipButton.lua
+animation.lua
 WXP.lua
 WXP.xml

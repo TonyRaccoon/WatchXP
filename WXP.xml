@@ -43,7 +43,7 @@
 				<FontString name="WXP_Opt_BlipSize" text="Blip Size" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
-							<Offset><AbsDimension x="0" y="-64"/></Offset>
+							<Offset><AbsDimension x="0" y="-80"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -51,7 +51,7 @@
 				<FontString name="WXP_Opt_Offset" text="Vertical Offset" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
-							<Offset><AbsDimension x="0" y="-114"/></Offset>
+							<Offset><AbsDimension x="0" y="-130"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -59,7 +59,7 @@
 				<FontString name="WXP_Opt_BlipTexture" text="Blip Texture" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
-							<Offset><AbsDimension x="0" y="-164"/></Offset>
+							<Offset><AbsDimension x="0" y="-180"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -167,6 +167,26 @@
 					</Anchors>
 				</FontString>
 				
+				<Texture name="WXP_OptBut_Color">
+					<Size><AbsDimension x="16" y="16"/></Size>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="4" y="-48"/></Offset>
+						</Anchor>
+					</Anchors>
+					<Scripts>
+						<OnClick>WXP.ShowColorPicker()</OnClick>
+					</Scripts>
+				</Texture>
+				
+				<FontString name="WXP_Opt_LabelColorTexture" text="Label Color" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="LEFT" relativeTo="WXP_OptBut_Color" relativePoint="RIGHT">
+							<Offset><AbsDimension x="4" y="0"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
 				<FontString name="WXP_Opt_Font" text="Label Font" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
@@ -223,6 +243,18 @@
 				</Scripts>
 			</Checkbutton>
 			
+			<Button name="WXP_OptBut_ColorButton">
+				<Size><AbsDimension x="16" y="16"/></Size>
+				<Anchors>
+					<Anchor point="CENTER" relativeTo="WXP_OptBut_Color" relativePoint="CENTER">
+						<Offset><AbsDimension x="0" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>WXP.ShowColorPicker()</OnClick>
+				</Scripts>
+			</Button>
+			
 			<Checkbutton name="WXP_OptBut_Font1" inherits="SendMailRadioButtonTemplate" id="1">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
@@ -277,7 +309,7 @@
 			<Checkbutton name="WXP_OptBut_Font4" inherits="SendMailRadioButtonTemplate" id="1">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
-						<Offset><AbsDimension x="12" y="-52"/></Offset>
+						<Offset><AbsDimension x="140" y="-4"/></Offset>
 					</Anchor>
 				</Anchors>
 				
@@ -291,17 +323,39 @@
 				</Scripts>
 			</Checkbutton>
 			
-			<Button name="WXP_OptBut_Color" inherits="UIPanelButtonTemplate" text="Label Color">
-				<Size><AbsDimension x="128" y="32"/></Size>
+			<Checkbutton name="WXP_OptBut_Font5" inherits="SendMailRadioButtonTemplate" id="1">
 				<Anchors>
-					<Anchor point="LEFT" relativeTo="WXP_Opt_Font" relativePoint="RIGHT">
-						<Offset><AbsDimension x="150" y="0"/></Offset>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="140" y="-20"/></Offset>
 					</Anchor>
 				</Anchors>
+				
 				<Scripts>
-					<OnClick>WXP.ShowColorPicker()</OnClick>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\NIM_____.ttf" and 1 or 0) end</OnShow>
+					<OnLoad>
+						_G[self:GetName().."Text"]:SetText("Nimrod")
+						_G[self:GetName().."Text"]:SetFont("Fonts\\NIM_____.ttf", 12)
+					</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
 				</Scripts>
-			</Button>
+			</Checkbutton>
+			
+			<Checkbutton name="WXP_OptBut_Font6" inherits="SendMailRadioButtonTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Font" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="140" y="-36"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\K_Pagetext.TTF" and 1 or 0) end</OnShow>
+					<OnLoad>
+						_G[self:GetName().."Text"]:SetText("Mok")
+						_G[self:GetName().."Text"]:SetFont("Fonts\\K_Pagetext.TTF", 12)
+					</OnLoad>
+					<OnClick>WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
 			
 			<Slider name="WXP_OptBut_FontSize" inherits="OptionsSliderTemplate" minValue="4" maxValue="36" defaultValue="12" valueStep="1" obeyStepOnDrag="true">
 				<Anchors>

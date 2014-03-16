@@ -8,18 +8,18 @@ WXP.default_settings = {
 	
 	blip = {
 		show = true,
-		size = 24,
-		texture = "INTERFACE\\MINIMAP\\UI-Minimap-ZoomInButton-Up.blp",
+		size = 20,
+		texture = "INTERFACE\\BUTTONS\\JumpUpArrow.blp",
 		
 		texoffset = {
 			x1 = 0,
 			x2 = 1,
-			y1 = 0,
-			y2 = 1
+			y1 = 1,
+			y2 = 0
 		},
 		
 		offset = {
-			y = 0
+			y = 15
 		}
 	},
 	
@@ -29,35 +29,22 @@ WXP.default_settings = {
 		showrealm = "different",
 		
 		offset = {
-			y = 16
+			y = 5
 		},
 		
 		color = {
 			r = 1,
-			g = 1,
-			b = 1,
+			g = 0.8824,
+			b = 0,
 			a = 1
 		},
 		
 		font = {
 			face = "Fonts\\ARIALN.TTF",
-			size = 14
+			size = 12
 		}
 	}
 }
-
---[[
-	Message formats:
-	
-	party-xp,name,realm,level,xp,xpmax		sent to party, with XP payload
-	party-req,name,realm					sent to party, request for XP info from everyone
-
-	ask-xp,name,realm,level,xp,xpmax		sent to player, with XP payload
-	ask-req,name,realm						sent to player, request for XP info
-
-	wxp-bn-xp,name,realm,level,xp,xpmax		sent to BN friend, with XP payload
-	wxp-bn-req								sent to BN friend, request for XP info
-]]
 
 --- Events ---
 
@@ -69,8 +56,9 @@ function WXP.OnLoad(self)						-- Fired when addon is loaded
 	self:RegisterEvent("CHAT_MSG_ADDON")
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("GROUP_ROSTER_UPDATE")
-	self:RegisterEvent("CHAT_MSG_BN_WHISPER")
-	self:RegisterEvent("CHAT_MSG_BN_WHISPER_INFORM") -- When you send a RealID message
+	self:RegisterEvent("PARTY_MEMBER_DISABLE")
+	self:RegisterEvent("PARTY_MEMBER_ENABLE")
+	self:RegisterEvent("BN_CHAT_MSG_ADDON")
 	RegisterAddonMessagePrefix("WXP")
 	
 	if UnitLevel("player") == WXP.GetMaxLevel() then
@@ -80,7 +68,7 @@ function WXP.OnLoad(self)						-- Fired when addon is loaded
 end
 
 function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is triggered
-	if event == "PLAYER_XP_UPDATE" then
+	if     event == "PLAYER_XP_UPDATE" then
 		WXP.SendExpToParty()
 	
 	elseif event == "ADDON_LOADED" then
@@ -102,10 +90,6 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 		WXP_Options:Hide()
 		WXP_Options_Label:Hide()
 		
-		-- Add a chat filter so RealID /wxp ask messages aren't shown
-		ChatFrame_AddMessageEventFilter("CHAT_MSG_BN_WHISPER", WXP.BNMessageFilter)
-		ChatFrame_AddMessageEventFilter("CHAT_MSG_BN_WHISPER_INFORM", WXP.BNMessageFilter)
-		
 		-- Finally, poll the party to get experience from party members
 		WXP.PollParty()
 		
@@ -115,75 +99,53 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 	
 	elseif event == "CHAT_MSG_ADDON" then
 		local addonName, args, channel, sender = ...;
-		if addonName ~= "WXP" then return end
-		
 		WXP.Debug("|cffcccccc[AddonMessage]|r|cffaaaaaa", args)
-		
+		if sender == UnitName("player").."-"..GetRealmName("player") then return end -- Ignore messages from ourselves
 		local msgArgs = {strsplit(",", args)}
 		
 		if msgArgs[1] == "party-xp" or msgArgs[1] == "ask-xp" then
 			local name  = msgArgs[2]
 			local realm = msgArgs[3]
-			local level = msgArgs[4]
-			local xp    = msgArgs[5]
-			local xpmax = msgArgs[6]
-			
-			if not (name == UnitName("player") and realm == GetRealmName("player")) then -- if both character and realm name are same as ours, ignore it
-				if msgArgs[1] == "xp" then
-					WXP.Debug(format("|cff8888ff<<< Got party XP: %s %s / %s through %s", WXP.PlayerLink(name,realm), WXP.format_thousand(xp), WXP.format_thousand(xpmax), level))
-				elseif msgArgs[1] == "askxp" then
-					WXP.Debug(format("|cffd24cff<<< Got player XP: %s %s / %s through %s", WXP.PlayerLink(name,realm), WXP.format_thousand(xp), WXP.format_thousand(xpmax), level))
-				end
-				
-				local marker = WXPMarker.Find(name,realm)
-				if marker then
-					marker:Update({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
-				else
-					WXPMarker.new({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
-				end
-			end
-		
-		elseif msgArgs[1] == "NEWXP" and WXP_Settings.updatewarning then -- Show a deprecation warning
-			local name = msgArgs[4]
-			WXP.Msg(name.." is using an outdated version of WatchXP! Tell them to update it or it won't work with you. Type |cffff7f00/wxp updatewarning|r to disable these messages.")
-		
-		end
-		
-		if msgArgs[1] == "party-req" then
-			if not (msgArgs[2] == UnitName("player") and msgArgs[3] == GetRealmName("player")) then -- if both character and realm name are same as ours, ignore it
-				WXP.Debug("|cff4444ff<<< Got party XP request from:|r", args)
-				WXP.SendExpToParty()
-			end
-		end
-		
-		if msgArgs[1] == "ask-req" then
+			local level = tonumber(msgArgs[4])
+			local xp    = tonumber(msgArgs[5])
+			local xpmax = tonumber(msgArgs[6])
+			WXP.Debug(format("|cff8888ff<<< Got %s XP: %s %s / %s through %s", (msgArgs[1] == "party-xp" and "party" or "player"), WXP.PlayerLink(name,realm), WXP.format_thousand(xp), WXP.format_thousand(xpmax), level))
+			WXPMarker.new({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
+		elseif msgArgs[1] == "party-req" then
+			WXP.Debug("|cff4444ff<<< Got party XP request from:|r", args)
+			WXP.SendExpToParty()
+		elseif msgArgs[1] == "ask-req" then
 			local name = msgArgs[2]
 			local realm = msgArgs[3]
 			WXP.SendExpToPlayer(name.."-"..realm)
+		elseif msgArgs[1] == "NEWXP" and WXP_Settings.updatewarning then -- Show a deprecation warning
+			local name = msgArgs[4]
+			WXP.Msg(name.." is using an outdated version of WatchXP! Tell them to update it or it won't work with you. Type |cffff7f00/wxp updatewarning|r to disable these messages.")
 		end
 	
-	--if event == "RAID_ROSTER_UPDATE" then
-	elseif event == "GROUP_ROSTER_UPDATE" then
+	elseif event == "BN_CHAT_MSG_ADDON" then
+		local addonName, args, channel, sender = ...
+		print(addonName, args, channel, sender)
+		local msgArgs = {strsplit(",", args)}
+		
+		if msgArgs[1] == "bn-xp" then
+			local name  = msgArgs[2]
+			local realm = msgArgs[3]
+			local level = tonumber(msgArgs[4])
+			local xp    = tonumber(msgArgs[5])
+			local xpmax = tonumber(msgArgs[6])
+			WXPMarker.new({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
+		elseif msgArgs[1] == "bn-req" then
+			WXP.SendExpToBNFriend(sender)
+		end
+	
+	
+	elseif event == "GROUP_ROSTER_UPDATE" then -- or event == "RAID_ROSTER_UPDATE
 		WXP.Debug("|cff8888ffParty altered!|r")
 		WXPMarker.RemoveAll()
 		
 		if GetNumSubgroupMembers() > 0 then -- If we're in a group, request everything again
 			WXP.PollParty()
-		end
-	
-	elseif event == "CHAT_MSG_BN_WHISPER" then
-		local msg,name,_,_,_,_,_,_,_,_,_,_,pid = ...
-		if msg:find("wxp-bn-xp") then
-			local _,xp,xpmax,name,level = strsplit(",", msg)
-			
-			local num = WXP.GetFrameFromName(name,realm)
-			if num then
-				WXP.Update({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax}, num)
-			else
-				WXP.Create({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
-			end
-		elseif msg:find("wxp-bn-req") then
-			WXP.SendExpToBNFriend(pid)
 		end
 	
 	end
@@ -288,7 +250,7 @@ function WXP.PollBNFriend(ident)				-- Send out XP req to Battle.net friend
 	end
 	
 	if not pid then WXP.Msg("That is not a valid RealID friend") return end
-	BNSendWhisper(pid,"wxp-bn-req - I just sent you an experience request for WatchXP. If you're seeing this message, you don't have WatchXP!")
+	BNSendGameData(pid, "WXP", "bn-req")
 end
 
 
@@ -322,8 +284,8 @@ function WXP.SendExpToBNFriend(pid)				-- Send out new XP value to Battle.net fr
 		return
 	end
 	
-	local str = string.format("wxp-bn-xp,%s,%s,%s,%s,%s", UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
-	BNSendWhisper(pid,str)
+	local str = string.format("bn-xp,%s,%s,%s,%s,%s", UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
+	BNSendGameData(pid, "WXP", str)
 end
 
 
@@ -337,12 +299,6 @@ end
 
 function WXP.GetMaxLevel()
 	return MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
-end
-
-function WXP.BNMessageFilter(self,event,msg) 	-- Filter function to hide WXP RealID messages
-	if msg:find("wxp-bn-xp,") or msg:find("wxp-bn-req,") then
-		return true
-	end
 end
 
 function WXP.InsertDefaultSettings(tbl, def) 	-- Copies missing settings into WXP_Settings
@@ -502,6 +458,8 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP_OptBut_BlipSizeHigh:SetText("64")
 	WXP_OptBut_BlipSizeText:SetText(WXP_OptBut_BlipSize:GetValue())
 	
+	WXP_OptBut_Color:SetTexture(WXP_Settings.label.color.r, WXP_Settings.label.color.g, WXP_Settings.label.color.b)
+	
 	WXP_OptBut_Font1:SetChecked(WXP_Settings.label.font.face == "Fonts\\FRIZQT__.TTF")
 	WXP_OptBut_Font2:SetChecked(WXP_Settings.label.font.face == "Fonts\\ARIALN.TTF")
 	WXP_OptBut_Font3:SetChecked(WXP_Settings.label.font.face == "Fonts\\MORPHEUS.TTF")
@@ -517,50 +475,60 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 end
 
 function WXP.LoadBlipButtons()					-- Initialize blip buttons
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\MapQuestHub_Icon32.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\MiniMap-PositionArrows.blp", -0.5, 1.5)
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\MiniMap-QuestArrow.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\TempleofKotmogu_ball_cyan.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\TempleofKotmogu_ball_green.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\TempleofKotmogu_ball_orange.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\TempleofKotmogu_ball_purple.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\UI-Minimap-ZoomInButton-Up.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\UI-Minimap-ZoomOutButton-Up.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\Vehicle-Air-Occupied.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\Vehicle-Ground-Occupied.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\Vehicle-GrummleConvoy.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\Vehicle-SilvershardMines-Arrow.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\TRACKING\\Focus.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\TRACKING\\POIArrow.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\TRACKING\\QuestBlob.blp")
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\TRACKING\\Target.blp")
-	
 	--																x1		x2		y1		y2
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.625,	0.75,	0,		0.25)	-- Flat color circles
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.375,	0.5,	0,		0.25)
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.25,	0.375,	0,		0.25)
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.875,	1,		0,		0.25)
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.5,	0.625,	0,		0.25)
+	WXPBlipButton.new(0,0, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.625,	0.75,	0,		0.25)	-- Flat color circles
+	WXPBlipButton.new(1,0, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.375,	0.5,	0,		0.25)
+	WXPBlipButton.new(2,0, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.25,	0.375,	0,		0.25)
+	WXPBlipButton.new(3,0, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.875,	1,		0,		0.25)
+	WXPBlipButton.new(4,0, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.5,	0.625,	0,		0.25)
+	WXPBlipButton.new(5,0, "INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.25, 	0.375,	0.5,	0.625)	-- Speech Bubble
+	WXPBlipButton.new(6,0, "INTERFACE\\BUTTONS\\UI-GroupLoot-Coin-Up.blp")
+	WXPBlipButton.new(7,0, "INTERFACE\\MINIMAP\\Vehicle-GrummleConvoy.blp")
 	
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.625,	0.75,	0.5,	0.75)	-- Dotted color circles
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.375,	0.5,	0.5,	0.75)
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.25,	0.375,	0.5,	0.75)
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.875,	1,		0.5,	0.75)
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.5,	0.625,	0.5,	0.75)
+	WXPBlipButton.new(0,1, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.625,	0.75,	0.5,	0.75)	-- Dotted color circles
+	WXPBlipButton.new(1,1, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.375,	0.5,	0.5,	0.75)
+	WXPBlipButton.new(2,1, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.25,	0.375,	0.5,	0.75)
+	WXPBlipButton.new(3,1, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.875,	1,		0.5,	0.75)
+	WXPBlipButton.new(4,1, "INTERFACE\\MINIMAP\\PARTYRAIDBLIPS.BLP",		0.5,	0.625,	0.5,	0.75)
+	WXPBlipButton.new(5,1, "INTERFACE\\MINIMAP\\TRACKING\\Target.blp")
+	WXPBlipButton.new(6,1, "INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.125, 	0.25,	0.5,	0.625)	-- Gear
+	WXPBlipButton.new(7,1, "INTERFACE\\MINIMAP\\TRACKING\\Focus.blp")
 	
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.625,	0.75,	0.375,	0.5)	-- Skull
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.125,	0.25,	0.125,	0.25)	-- Exclamation Mark
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.125, 	0.25,	0.5,	0.625)	-- Gear
-	WXPBlipButton.new("INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.25, 	0.375,	0.5,	0.625)	-- Speech Bubble
+	WXPBlipButton.new(0,2, "INTERFACE\\WorldStateFrame\\AllianceFlag.blp")
+	WXPBlipButton.new(1,2, "INTERFACE\\WorldStateFrame\\HordeFlag.blp")
+	WXPBlipButton.new(2,2, "INTERFACE\\BattlefieldFrame\\Battleground-Alliance.blp")
+	WXPBlipButton.new(3,2, "INTERFACE\\BattlefieldFrame\\Battleground-Horde.blp")
+	WXPBlipButton.new(4,2, "INTERFACE\\MINIMAP\\UI-Minimap-ZoomInButton-Up.blp")
+	WXPBlipButton.new(5,2, "INTERFACE\\MINIMAP\\UI-Minimap-ZoomOutButton-Up.blp")
+	WXPBlipButton.new(6,2, "INTERFACE\\BUTTONS\\UI-SliderBar-Button-Horizontal.blp")
+	WXPBlipButton.new(7,2, "INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.625,	0.75,	0.375,	0.5)	-- Skull
 	
-	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0, 		0.25,	0,		0.25)	-- Raid icons
-	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.25, 	0.5,	0,		0.25)
-	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.5, 	0.75,	0,		0.25)
-	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.75, 	1,		0,		0.25)
-	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0, 		0.25,	0.25,	0.5)
-	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.25, 	0.5,	0.25,	0.5)
-	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.5, 	0.75,	0.25,	0.5)
-	WXPBlipButton.new("INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.75, 	1,		0.25,	0.5)
+	WXPBlipButton.new(0,3, "INTERFACE\\MINIMAP\\TempleofKotmogu_ball_cyan.blp")
+	WXPBlipButton.new(1,3, "INTERFACE\\MINIMAP\\TempleofKotmogu_ball_green.blp")
+	WXPBlipButton.new(2,3, "INTERFACE\\MINIMAP\\TempleofKotmogu_ball_orange.blp")
+	WXPBlipButton.new(3,3, "INTERFACE\\MINIMAP\\TempleofKotmogu_ball_purple.blp")
+	WXPBlipButton.new(4,3, "INTERFACE\\MINIMAP\\OBJECTICONS.BLP",		0.125,	0.25,	0.125,	0.25)	-- Exclamation Mark
+	WXPBlipButton.new(5,3, "INTERFACE\\MINIMAP\\MapQuestHub_Icon32.blp")
+	WXPBlipButton.new(6,3, "INTERFACE\\TARGETINGFRAME\\PortraitQuestBadge.blp")
+	WXPBlipButton.new(7,3, "INTERFACE\\MINIMAP\\TRACKING\\QuestBlob.blp")
+	
+	WXPBlipButton.new(0,4, "INTERFACE\\MINIMAP\\Vehicle-Ground-Occupied.blp", 0,1,1,0)
+	WXPBlipButton.new(1,4, "INTERFACE\\MINIMAP\\MiniMap-QuestArrow.blp", 0,1,1,0)
+	WXPBlipButton.new(2,4, "INTERFACE\\BUTTONS\\UI-MicroStream-Yellow.blp")
+	WXPBlipButton.new(3,4, "INTERFACE\\MINIMAP\\TRACKING\\POIArrow.blp", 0,1,1,0)
+	WXPBlipButton.new(4,4, "INTERFACE\\PvPRankBadges\\PvPRank01.blp")
+	WXPBlipButton.new(5,4, "INTERFACE\\MINIMAP\\Vehicle-SilvershardMines-Arrow.blp", 0,1,1,0)
+	WXPBlipButton.new(6,4, "INTERFACE\\BUTTONS\\JumpUpArrow.blp", 0,1,1,0)
+	WXPBlipButton.new(7,4, "INTERFACE\\COMMON\\VOICECHAT-MUTED.BLP")
+	
+	WXPBlipButton.new(0,5, "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0, 		0.25,	0,		0.25)	-- Raid icons
+	WXPBlipButton.new(1,5, "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.25, 	0.5,	0,		0.25)
+	WXPBlipButton.new(2,5, "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.5, 	0.75,	0,		0.25)
+	WXPBlipButton.new(3,5, "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.75, 	1,		0,		0.25)
+	WXPBlipButton.new(4,5, "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0, 		0.25,	0.25,	0.5)
+	WXPBlipButton.new(5,5, "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.25, 	0.5,	0.25,	0.5)
+	WXPBlipButton.new(6,5, "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.5, 	0.75,	0.25,	0.5)
+	WXPBlipButton.new(7,5, "INTERFACE\\TARGETINGFRAME\\UI-RaidTargetingIcons.blp",		0.75, 	1,		0.25,	0.5)
 end
 
 function WXP.ShowColorPicker()					-- Show the color picker
@@ -582,8 +550,7 @@ end
 --- UI events ---
 
 function WXP.OnBlipMouseEnter()					-- Fired when mouse enters a blip
-	local id = GetMouseFocus():GetID()
-	local marker = WXPMarker.instances[id]
+	local marker = GetMouseFocus().blip.marker
 	
 	local name  = marker.player.name  or "Unknown"
 	local realm = marker.player.realm or "Unknown"
@@ -702,6 +669,8 @@ function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (butto
 		WXP_OptBut_Font2:SetChecked(nil)
 		WXP_OptBut_Font3:SetChecked(nil)
 		WXP_OptBut_Font4:SetChecked(nil)
+		WXP_OptBut_Font5:SetChecked(nil)
+		WXP_OptBut_Font6:SetChecked(nil)
 	
 	elseif self:GetName() == "WXP_OptBut_Font2" then		-- Arial
 		WXP_Settings.label.font.face = "Fonts\\ARIALN.TTF"
@@ -709,6 +678,8 @@ function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (butto
 		WXP_OptBut_Font2:SetChecked(1)
 		WXP_OptBut_Font3:SetChecked(nil)
 		WXP_OptBut_Font4:SetChecked(nil)
+		WXP_OptBut_Font5:SetChecked(nil)
+		WXP_OptBut_Font6:SetChecked(nil)
 	
 	elseif self:GetName() == "WXP_OptBut_Font3" then		-- Morpheus
 		WXP_Settings.label.font.face = "Fonts\\MORPHEUS.TTF"
@@ -716,6 +687,8 @@ function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (butto
 		WXP_OptBut_Font2:SetChecked(nil)
 		WXP_OptBut_Font3:SetChecked(1)
 		WXP_OptBut_Font4:SetChecked(nil)
+		WXP_OptBut_Font5:SetChecked(nil)
+		WXP_OptBut_Font6:SetChecked(nil)
 	
 	elseif self:GetName() == "WXP_OptBut_Font4" then		-- Skurri
 		WXP_Settings.label.font.face = "Fonts\\SKURRI.TTF"
@@ -723,6 +696,26 @@ function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (butto
 		WXP_OptBut_Font2:SetChecked(nil)
 		WXP_OptBut_Font3:SetChecked(nil)
 		WXP_OptBut_Font4:SetChecked(1)
+		WXP_OptBut_Font5:SetChecked(nil)
+		WXP_OptBut_Font6:SetChecked(nil)
+	
+	elseif self:GetName() == "WXP_OptBut_Font5" then		-- Nimrod
+		WXP_Settings.label.font.face = "Fonts\\NIM_____.ttf"
+		WXP_OptBut_Font1:SetChecked(nil)
+		WXP_OptBut_Font2:SetChecked(nil)
+		WXP_OptBut_Font3:SetChecked(nil)
+		WXP_OptBut_Font4:SetChecked(nil)
+		WXP_OptBut_Font5:SetChecked(1)
+		WXP_OptBut_Font6:SetChecked(nil)
+	
+	elseif self:GetName() == "WXP_OptBut_Font6" then		-- Mok
+		WXP_Settings.label.font.face = "Fonts\\K_Pagetext.TTF"
+		WXP_OptBut_Font1:SetChecked(nil)
+		WXP_OptBut_Font2:SetChecked(nil)
+		WXP_OptBut_Font3:SetChecked(nil)
+		WXP_OptBut_Font4:SetChecked(nil)
+		WXP_OptBut_Font5:SetChecked(nil)
+		WXP_OptBut_Font6:SetChecked(1)
 		
 	elseif self:GetName() == "WXP_OptBut_OffsetY" then
 		WXP_Settings.blip.offset.y = self:GetValue()
@@ -750,11 +743,13 @@ end
 function WXP.OnColorPickerChanged()				-- Fired when color picker is changed
 	WXP_Settings.label.color.r, WXP_Settings.label.color.g, WXP_Settings.label.color.b = ColorPickerFrame:GetColorRGB()
 	WXP_Settings.label.color.a = 1 - OpacitySliderFrame:GetValue()
+	WXP_OptBut_Color:SetTexture(ColorPickerFrame:GetColorRGB())
 	WXPMarker.RedrawAll()
 end
 
 function WXP.OnColorPickerCanceled(prevValues) 	-- Fired when the color picker is closed with "Cancel"
 	WXP_Settings.label.color = prevValues
+	WXP_OptBut_Color:SetTexture(prevValues.r, prevValues.g, prevValues.b)
 	WXPMarker.RedrawAll()
 end
 
@@ -770,8 +765,50 @@ function WXP.OnDefaultsClicked()				-- Reset all settings to default when "Defau
 	if debug_enabled then WXP_Settings.debug = true end
 	WXP_Settings.version = WXP.version
 	WXP.InitializeWidgets()
-	WXPBlipButton.Update()
+	WXPBlipButton.UpdateAll()
 	WXPMarker.RedrawAll()
+end
+
+--- Debug functions ---
+
+function WXP.add(pct, name)						-- Debug function to add a marker
+	pct = pct or 25
+	name = name or "Marker"
+	local marker = WXPMarker.new({name=name, realm="Test", xp=pct, xpmax=100, level=10})
+end
+
+function WXP.pop()								-- Debug function to add a bunch of markers
+	WXP.add(25, "1")
+	WXP.add(40, "2")
+	WXP.add(35, "3")
+	WXP.add(30, "4")
+end
+
+function WXP.xp(name,realm,level,xp,xpmax)		-- Debug function to update a marker
+	WXPMarker.Find(name,realm):Update({name=name,realm=realm,level=level,xp=xp,xpmax=xpmax})
+end
+
+function WXP.testanim()
+	fox = CreateFrame("Frame", "fox", UIParent)
+	fox:SetFrameStrata("BACKGROUND")
+	fox:SetWidth(100)
+	fox:SetHeight(100)
+	fox:SetPoint("CENTER", 0, 0)
+
+	fox.texture = fox:CreateTexture("foxtex", "ARTWORK")
+	fox.texture:SetTexture(255,127,0)
+	fox.texture:SetAllPoints(fox)
+	fox.animation = fox:CreateAnimationGroup("foxanim")
+
+	fox.animation.translate = fox.animation:CreateAnimation("Translation")
+	fox.animation.translate:SetDuration(3)
+	fox.animation.translate:SetSmoothing("IN_OUT")
+	fox.animation.translate:SetOffset(300, 0)
+	fox.animation:Play()
+
+	fox.animation:SetScript("OnFinished", function(frame)
+		print(frame:GetSmoothProgress())
+	end)
 end
 
 --- Miscellaneous functions ---
@@ -818,17 +855,4 @@ function WXP.print_r(t, indent, done)			-- Prints a table and all its values
       print  (indent .. "[" .. tostring (key) .. "] => " .. tostring (value).."")
     end
   end
-end
-
-function WXP.add(pct, name)						-- Debug function to add or update a marker
-	pct = pct or 25
-	name = name or "Marker"
-	local marker = WXPMarker.new({name=name, realm="Test", xp=pct, xpmax=100, level=10})
-end
-
-function WXP.pop()								-- Debug function to add a bunch of markers
-	WXP.add(25, "1")
-	WXP.add(40, "2")
-	WXP.add(35, "3")
-	WXP.add(30, "4")
 end
