@@ -104,19 +104,21 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 		local msgArgs = {strsplit(",", args)}
 		
 		if msgArgs[1] == "party-xp" or msgArgs[1] == "ask-xp" then
-			local name  = msgArgs[2]
-			local realm = msgArgs[3]
-			local level = tonumber(msgArgs[4])
-			local xp    = tonumber(msgArgs[5])
-			local xpmax = tonumber(msgArgs[6])
+			local remotever = msgArgs[2]
+			local name      = msgArgs[3]
+			local realm     = msgArgs[4]
+			local level     = tonumber(msgArgs[5])
+			local xp        = tonumber(msgArgs[6])
+			local xpmax     = tonumber(msgArgs[7])
 			WXP.Debug(format("|cff8888ff<<< Got %s XP: %s %s / %s through %s", (msgArgs[1] == "party-xp" and "party" or "player"), WXP.PlayerLink(name,realm), WXP.format_thousand(xp), WXP.format_thousand(xpmax), level))
 			WXPMarker.new({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
 		elseif msgArgs[1] == "party-req" then
 			WXP.Debug("|cff4444ff<<< Got party XP request from:|r", args)
 			WXP.SendExpToParty()
 		elseif msgArgs[1] == "ask-req" then
-			local name = msgArgs[2]
-			local realm = msgArgs[3]
+			local remotever = msgArgs[2]
+			local name      = msgArgs[3]
+			local realm     = msgArgs[4]
 			WXP.SendExpToPlayer(name.."-"..realm)
 		elseif msgArgs[1] == "NEWXP" and WXP_Settings.updatewarning then -- Show a deprecation warning
 			local name = msgArgs[4]
@@ -129,11 +131,12 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 		local msgArgs = {strsplit(",", args)}
 		
 		if msgArgs[1] == "bn-xp" then
-			local name  = msgArgs[2]
-			local realm = msgArgs[3]
-			local level = tonumber(msgArgs[4])
-			local xp    = tonumber(msgArgs[5])
-			local xpmax = tonumber(msgArgs[6])
+			local remotever = msgArgs[2]
+			local name      = msgArgs[3]
+			local realm     = msgArgs[4]
+			local level     = tonumber(msgArgs[5])
+			local xp        = tonumber(msgArgs[6])
+			local xpmax     = tonumber(msgArgs[7])
 			WXP.Debug(format("|cff00D9D9<<< Got BN XP: %s %s / %s through %s", WXP.PlayerLink(name,realm), WXP.format_thousand(xp), WXP.format_thousand(xpmax), level))
 			WXPMarker.new({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
 		elseif msgArgs[1] == "bn-req" then
@@ -231,13 +234,13 @@ end
 function WXP.PollParty()						-- Send out XP req to party
 	if GetNumSubgroupMembers("LE_PARTY_CATEGORY_HOME") == 0 then return end
 	WXP.Debug("|cff8888ff>>> Sending XP request to party|r")
-	local reqstr = string.format("party-req,%s,%s", UnitName("player"), GetRealmName("player"))
+	local reqstr = string.format("party-req,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"))
 	SendAddonMessage("WXP",reqstr,"PARTY")
 end
 
 function WXP.PollPlayer(name)					-- Send out XP req to player
 	WXP.Msg("Sending XP request to "..WXP.PlayerLink(name))
-	local str = string.format("ask-req,%s,%s", UnitName("player"), GetRealmName("player"))
+	local str = string.format("ask-req,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"))
 	SendAddonMessage("WXP", str, "WHISPER", name)
 end
 
@@ -252,7 +255,7 @@ function WXP.PollBNFriend(ident)				-- Send out XP req to Battle.net friend
 	
 	if not pid then WXP.Msg("That is not a valid RealID friend") return end
 	WXP.Msg("Sending XP request to "..ident)
-	BNSendGameData(pid, "WXP", "bn-req")
+	BNSendGameData(pid, "WXP", "bn-req,"..WXP.version)
 end
 
 
@@ -265,7 +268,7 @@ function WXP.SendExpToParty()					-- Send out new XP value to party (response to
 	end
 	
 	WXP.Debug("|cff8888ff>>> Sending XP to party|r")
-	local str = string.format("party-xp,%s,%s,%s,%s,%s", UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
+	local str = string.format("party-xp,%s,%s,%s,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
 	SendAddonMessage("WXP", str, "PARTY")
 end
 
@@ -276,7 +279,7 @@ function WXP.SendExpToPlayer(name)				-- Send out new XP value to player (respon
 	end
 	
 	WXP.Debug("|cffd24cff>>> Sending XP to|r", WXP.PlayerLink(name))
-	local str = string.format("ask-xp,%s,%s,%s,%s,%s", UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
+	local str = string.format("ask-xp,%s,%s,%s,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
 	WXP.Debug(str)
 	SendAddonMessage("WXP", str, "WHISPER", name)
 end
@@ -286,7 +289,7 @@ function WXP.SendExpToBNFriend(pid)				-- Send out new XP value to Battle.net fr
 		return
 	end
 	
-	local str = string.format("bn-xp,%s,%s,%s,%s,%s", UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
+	local str = string.format("bn-xp,%s,%s,%s,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
 	BNSendGameData(pid, "WXP", str)
 end
 
