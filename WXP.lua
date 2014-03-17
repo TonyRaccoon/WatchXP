@@ -2,6 +2,9 @@ WXP = {}
 WXP.version = GetAddOnMetadata("WatchXP","Version")
 WXP.date = GetAddOnMetadata("WatchXP","X-Date")
 
+local ADDON_NAME, namespace = ...
+local L = namespace.L
+
 WXP.default_settings = {
 	debug = false,
 	updatewarning = true,
@@ -93,10 +96,6 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 		
 		-- Finally, poll the party to get experience from party members
 		WXP.PollParty()
-		
-		-- Debug: open options panel on load
-		--InterfaceOptionsFrame_OpenToCategory("WatchXP")
-		--InterfaceOptionsFrame_OpenToCategory("WatchXP")
 	
 	elseif event == "CHAT_MSG_ADDON" then
 		local addonName, args, channel, sender = ...;
@@ -123,12 +122,13 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 			WXP.SendExpToPlayer(name.."-"..realm)
 		elseif msgArgs[1] == "NEWXP" and WXP_Settings.updatewarning then -- Show a deprecation warning
 			local name = msgArgs[4]
-			WXP.Msg(name.." is using an outdated version of WatchXP! Tell them to update it or it won't work with you. Type |cffff7f00/wxp updatewarning|r to disable these messages.")
+			WXP.Msg(format(L["%s is using an outdated version of WatchXP! Tell them to update it or it won't work with you. Type |cffff7f00/wxp updatewarning|r to disable these messages."], name))
 		end
 	
 	elseif event == "BN_CHAT_MSG_ADDON" then
-		local addonName, args, channel, sender = ...
-		WXP.Debug("|cffcccccc[BNAddonMessage]|r|cffaaaaaa", addonName, args, channel, sender)
+		local addonName, args, channel, toonid = ...
+		local pid = WXP.PresenceIDFromToonID(toonid)
+		WXP.Debug("|cffcccccc[BNAddonMessage]|r|cffaaaaaa", addonName, args, channel, toonid)
 		local msgArgs = {strsplit(",", args)}
 		
 		if msgArgs[1] == "bn-xp" then
@@ -139,10 +139,12 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 			local xp        = tonumber(msgArgs[6])
 			local xpmax     = tonumber(msgArgs[7])
 			WXP.Debug(format("|cff00D9D9<<< Got BN XP: %s %s / %s through %s", WXP.PlayerLink(name,realm), WXP.format_thousand(xp), WXP.format_thousand(xpmax), level))
+			local _,bnname = BNGetFriendInfoByID(pid)
+			WXP.Msg(format("Got XP response from %s (%s). This blip will not automatically update. To remove the blip, type /wxp clear.", bnname, WXP.PlayerLink(name,realm)))
 			WXPMarker.new({name=name, realm=realm, level=level, xp=xp, xpmax=xpmax})
 		elseif msgArgs[1] == "bn-req" then
 			WXP.Debug("|cff00D9D9<<< Got BN XP request from:|r "..args)
-			WXP.SendExpToBNFriend(sender)
+			WXP.SendExpToBNFriend(toonid)
 		end
 	
 	
@@ -158,6 +160,7 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 end
 
 function WXP.OnCommand(cmd)						-- Fired when the player enters a command starting with /wxp
+	cmd = cmd:lower()
 	if cmd == "config" or cmd == "options" or cmd == "settings" or cmd == "opt" or cmd == "cfg" or cmd == "win" then
 		InterfaceOptionsFrame_OpenToCategory("WatchXP")
 		InterfaceOptionsFrame_OpenToCategory("WatchXP") -- The first call to OpenToCategory after login/reloadui doesn't work properly due to a blizzard bug
@@ -171,14 +174,14 @@ function WXP.OnCommand(cmd)						-- Fired when the player enters a command start
 	
 	elseif cmd == "debug" then
 		WXP_Settings.debug = not WXP_Settings.debug
-		WXP.Msg("Debug output "..(WXP_Settings.debug and "enabled." or "disabled."))
+		WXP.Msg(format(L["Debug output %s"], WXP_Settings.debug and L["enabled"] or L["disabled"]))
 	
 	elseif cmd == "updatewarning" or cmd == "updwarn" then
 		WXP_Settings.updatewarning = not WXP_Settings.updatewarning
-		WXP.Msg("Update warning "..(WXP_Settings.updatewarning and "enabled." or "disabled."))
+		WXP.Msg(format(L["Update warning %s"], WXP_Settings.updatewarning and L["enabled"] or L["disabled"]))
 	
 	elseif cmd == "version" or cmd == "vers" or cmd == "ver" or cmd == "v" then
-		WXP.Msg(format("Version: %s (%s)", WXP.version, WXP.date))
+		WXP.Msg(format(L["Version: %s (%s)"], WXP.version, WXP.date))
 	
 	elseif cmd == "refresh" or cmd == "clear" or cmd == "wipe" then
 		WXPMarker.RemoveAll()
@@ -194,15 +197,15 @@ function WXP.OnCommand(cmd)						-- Fired when the player enters a command start
 		end
 		
 	else
-		WXP.Msg("|cffffc445/wxp config|r : Show the configuration panel")
-		WXP.Msg("|cffffc445/wxp ask player|r : Request a marker for a player not in your group (they still need WatchXP)")
-		WXP.Msg("|cffffc445/wxp ask FirstName LastName|r : Request a marker for a RealID friend (they still need WatchXP)")
-		WXP.Msg("|cffffc445/wxp ask n|r : Request a marker for the |cffffc445n|rth online RealID friend in your friends list (they still need WatchXP)")
-		WXP.Msg("|cffffc445/wxp toggle|r : Toggle displaying of WatchXP")
-		WXP.Msg("|cffffc445/wxp refresh|r : Refreshes the display and forces an update from all party members. Also removes leftover markers or markers added with /wxp ask")
-		WXP.Msg("|cffffc445/wxp debug|r : Toggle debugging output")
-		WXP.Msg("|cffffc445/wxp updatewarning|r : Toggle warning when other players are using an older, incompatible version")
-		WXP.Msg("|cffffc445/wxp version|r : Display addon version")
+		WXP.Msg("|cffffc445/wxp config|r : "				.. L["Show the options panel"])
+		WXP.Msg("|cffffc445/wxp ask player|r : "			.. L["Request a marker for a player not in your group (they still need WatchXP)"])
+		WXP.Msg("|cffffc445/wxp ask FirstName LastName|r : ".. L["Request a marker for a Battle.net friend (they still need WatchXP)"])
+		WXP.Msg("|cffffc445/wxp ask n|r : "					.. L["Request a marker for the nth online Battle.net friend in your friends list (they still need WatchXP)"])
+		WXP.Msg("|cffffc445/wxp toggle|r : "				.. L["Toggle visibility of WatchXP"])
+		WXP.Msg("|cffffc445/wxp refresh|r : "				.. L["Refreshes the display and forces an update from all party members. Also removes leftover markers or markers added with /wxp ask"])
+		WXP.Msg("|cffffc445/wxp debug|r : "					.. L["Toggle debug output"])
+		WXP.Msg("|cffffc445/wxp updatewarning|r : "			.. L["Toggle warning when other players are using an older, incompatible version"])
+		WXP.Msg("|cffffc445/wxp version|r : "				.. L["Display addon version"])
 	end
 end
 
@@ -221,11 +224,11 @@ end
 
 function WXP.ToggleDisplay()					-- Toggle display of addon
 	if WXP_Settings.blip.show then
-		WXP.Msg("Hiding WatchXP")
+		WXP.Msg(L["Hiding WatchXP"])
 		WXP_Frame:Hide()
 		WXP_Settings.blip.show = false
 	else
-		WXP.Msg("Showing WatchXP")
+		WXP.Msg(L["Showing WatchXP"])
 		WXP_Frame:Show()
 		WXP_Settings.blip.show = true
 	end
@@ -240,22 +243,29 @@ function WXP.PollParty()						-- Send out XP req to party
 end
 
 function WXP.PollPlayer(name)					-- Send out XP req to player
-	WXP.Msg("Sending XP request to "..WXP.PlayerLink(name))
+	WXP.Msg(format("Sending XP request to %s", WXP.PlayerLink(name)))
 	local str = string.format("ask-req,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"))
 	SendAddonMessage("WXP", str, "WHISPER", name)
 end
 
 function WXP.PollBNFriend(ident)				-- Send out XP req to Battle.net friend
-	if not BNConnected() then WXP.Msg("You must be connected to Battle.net to use that feature") return end
+	if not BNConnected() or not BNFeaturesEnabled() then
+		WXP.Msg(L["You must be connected to Battle.net to do that"])
+		return
+	end
+	
 	local pid
-	if strmatch(ident,"^%d+$") then -- ident is a number
+	
+	if strmatch(ident,"^%d+$") then -- ident is a number, assume it's friend #x in the BN list
 		pid = BNGetFriendInfo(ident)
 	else
 		pid = GetAutoCompletePresenceID(ident)
 	end
 	
+	local _,name = BNGetFriendInfoByID(pid)
+	
 	if not pid then WXP.Msg("That is not a valid RealID friend") return end
-	WXP.Msg("Sending XP request to "..ident)
+	WXP.Msg(format("Sending XP request to %s", name))
 	BNSendGameData(pid, "WXP", "bn-req,"..WXP.version)
 end
 
@@ -432,6 +442,19 @@ function WXP.ImportOlderSettings()				-- Upgrades older versions of settings
 	end
 end
 
+function WXP.PresenceIDFromToonID(toonid)		-- Get a Battle.net Presence ID from a given Toon ID
+	local friends,friendsonline = BNGetNumFriends()
+	
+	for i=1,friends do
+		local pid,_,_,_,_,tid = BNGetFriendInfo(i)
+		if tid == toonid then
+			return pid
+		end
+	end
+	
+	return false
+end
+
 --- UI functions ---
 
 function WXP.InitializeWidgets()				-- Initialize options panel widgets
@@ -442,25 +465,25 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP_OptBut_ShowLabels:SetChecked(WXP_Settings.label.show)
 	
 	WXP_OptBut_FontSize:SetValue(WXP_Settings.label.font.size)
-	WXP_OptBut_FontSize.tooltipText = "Change the size of the label text"
+	WXP_OptBut_FontSize.tooltipText = L["Label font size"]
 	WXP_OptBut_FontSizeLow:SetText("4")
 	WXP_OptBut_FontSizeHigh:SetText("36")
 	WXP_OptBut_FontSizeText:SetText(WXP_OptBut_FontSize:GetValue())
 	
 	WXP_OptBut_OffsetY:SetValue(WXP_Settings.blip.offset.y)
-	WXP_OptBut_OffsetY.tooltipText = "Change the vertical offset of the blips"
+	WXP_OptBut_OffsetY.tooltipText = L["Blip vertical offset"]
 	WXP_OptBut_OffsetYLow:SetText("-100")
 	WXP_OptBut_OffsetYHigh:SetText("100")
 	WXP_OptBut_OffsetYText:SetText(WXP_OptBut_OffsetY:GetValue())
 	
 	WXP_OptBut_LabelOffsetY:SetValue(WXP_Settings.label.offset.y)
-	WXP_OptBut_LabelOffsetY.tooltipText = "Change the vertical offset of the labels"
+	WXP_OptBut_LabelOffsetY.tooltipText = L["Label vertical offset"]
 	WXP_OptBut_LabelOffsetYLow:SetText("-100")
 	WXP_OptBut_LabelOffsetYHigh:SetText("100")
 	WXP_OptBut_LabelOffsetYText:SetText(WXP_OptBut_LabelOffsetY:GetValue())
 	
 	WXP_OptBut_BlipSize:SetValue(WXP_Settings.blip.size)
-	WXP_OptBut_BlipSize.tooltipText = "Size of the blips"
+	WXP_OptBut_BlipSize.tooltipText = L["Blip size"]
 	WXP_OptBut_BlipSizeLow:SetText("8")
 	WXP_OptBut_BlipSizeHigh:SetText("64")
 	WXP_OptBut_BlipSizeText:SetText(WXP_OptBut_BlipSize:GetValue())
@@ -479,6 +502,36 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP_OptBut_ShowRealm1:SetChecked(WXP_Settings.label.showrealm == "never")
 	WXP_OptBut_ShowRealm2:SetChecked(WXP_Settings.label.showrealm == "different")
 	WXP_OptBut_ShowRealm3:SetChecked(WXP_Settings.label.showrealm == "always")
+end
+
+function WXP.LocalizeXML(frame)						-- Set XML strings to localized versions
+	if frame == "WatchXP" then
+		WXP_Opt_Subtitle:SetText(			L[WXP_Opt_Subtitle:GetText()])
+		WXP_Opt_BlipSize:SetText(			L[WXP_Opt_BlipSize:GetText()])
+		WXP_Opt_Offset:SetText(				L[WXP_Opt_Offset:GetText()])
+		WXP_Opt_BlipTexture:SetText(		L[WXP_Opt_BlipTexture:GetText()])
+		WXP_OptBut_ShowText:SetText(		L[WXP_OptBut_ShowText:GetText()])
+		WXP_OptBut_AnimateText:SetText(		L[WXP_OptBut_AnimateText:GetText()])
+		WXP_OptBut_OpenLabels:SetText(		L[WXP_OptBut_OpenLabels:GetText()])
+	
+	elseif frame == "Labels" then
+		WXP_LabelOpt_Subtitle:SetText(		L[WXP_LabelOpt_Subtitle:GetText()])
+		WXP_Opt_LabelColorTexture:SetText(	L[WXP_Opt_LabelColorTexture:GetText()])
+		WXP_Opt_Font:SetText(				L[WXP_Opt_Font:GetText()])
+		WXP_Opt_FontSize:SetText(			L[WXP_Opt_FontSize:GetText()])
+		WXP_Opt_LabelOffset:SetText(		L[WXP_Opt_LabelOffset:GetText()])
+		WXP_Opt_ShowLevel:SetText(			L[WXP_Opt_ShowLevel:GetText()])
+		WXP_Opt_ShowRealm:SetText(			L[WXP_Opt_ShowRealm:GetText()])
+		WXP_OptBut_ShowLabelsText:SetText(	L[WXP_OptBut_ShowLabelsText:GetText()])
+		
+		WXP_OptBut_ShowLevel1Text:SetText(	L[WXP_OptBut_ShowLevel1Text:GetText()])
+		WXP_OptBut_ShowLevel2Text:SetText(	L[WXP_OptBut_ShowLevel2Text:GetText()])
+		WXP_OptBut_ShowLevel3Text:SetText(	L[WXP_OptBut_ShowLevel3Text:GetText()])
+		
+		WXP_OptBut_ShowRealm1Text:SetText(	L[WXP_OptBut_ShowRealm1Text:GetText()])
+		WXP_OptBut_ShowRealm2Text:SetText(	L[WXP_OptBut_ShowRealm2Text:GetText()])
+		WXP_OptBut_ShowRealm3Text:SetText(	L[WXP_OptBut_ShowRealm3Text:GetText()])
+	end
 end
 
 function WXP.LoadBlipButtons()					-- Initialize blip buttons
@@ -568,9 +621,9 @@ function WXP.OnBlipMouseEnter()					-- Fired when mouse enters a blip
 	local pct = math.floor((xp/xpmax)*100)
 	
 	GameTooltip:SetOwner(WXP_Frame,"ANCHOR_CURSOR")
-	GameTooltip:SetText(name .. "-" .. realm)
-	GameTooltip:AddLine("Level "..level)
-	GameTooltip:AddLine("XP: "..WXP.format_thousand(xp).." / "..WXP.format_thousand(xpmax).." ("..pct.."%)")
+	GameTooltip:SetText(format("%s-%s", name, realm))
+	GameTooltip:AddLine(format(L["Level %i"], level))
+	GameTooltip:AddLine(format(L["XP: %s / %s (%s%%)"], WXP.format_thousand(xp), WXP.format_thousand(xpmax), pct))
 	GameTooltip:Show()
 end
 
@@ -583,25 +636,29 @@ function WXP.OnOptionsLoaded(self)				-- Initialize Options panel
 		self.name = "WatchXP"
 		self.default = WXP.OnDefaultsClicked
 		InterfaceOptions_AddCategory(self)
+		WXP.LocalizeXML("WatchXP")
 	else
-		self.name = "Labels"
+		self.name = L["Labels"]
 		self.parent = "WatchXP"
 		self.default = WXP.OnDefaultsClicked
 		InterfaceOptions_AddCategory(self)
+		WXP.LocalizeXML("Labels")
 	end
+	
+	
 end
 
 function WXP.OnOptionsShown()					-- Fired when options panel opens
 	if not WXP_Settings then return end
 	if WXPMarker.Count() == 0 then
-		WXPMarker.new({name="Example!", realm="RealmName", level=1, xp=1, xpmax=4})
+		WXPMarker.new({name=L["Example!"], realm=L["RealmName"], level=1, xp=1, xpmax=4})
 	end
 end
 
 function WXP.OnOptionsHidden()					-- Fired when options panel closes
 	if not WXP_Settings then return end
 	
-	local marker = WXPMarker.Find("Example!", "RealmName")
+	local marker = WXPMarker.Find(L["Example!"], L["RealmName"])
 	if marker then
 		marker:Remove()
 	end

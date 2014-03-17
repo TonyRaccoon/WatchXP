@@ -1,10 +1,23 @@
 ## Interface: 50400
+
 ## Title: WatchXP
+
 ## Notes: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-esES: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-esMX: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-deDE: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-frFR: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-ptBR: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-ruRU: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-koKR: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-zhCN: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-zhTW: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+
 ## Author: Foxthorn
 ## Version: 3.0
-## X-Date: March 14, 2014
+## X-Date: March 17, 2014
 ## SavedVariables: WXP_Settings
+localization.lua
 WXPBlip.lua
 WXPMarker.lua
 WXPBlipButton.lua

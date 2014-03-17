@@ -196,7 +196,7 @@
 				<FontString name="WXP_Opt_LabelColorTexture" text="Label Color" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="LEFT" relativeTo="WXP_OptBut_Color" relativePoint="RIGHT">
-							<Offset><AbsDimension x="4" y="0"/></Offset>
+							<Offset><AbsDimension x="8" y="0"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -225,7 +225,7 @@
 					</Anchors>
 				</FontString>
 				
-				<FontString name="WXP_Opt_ShowLevel" text="Show Level in Label:" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+				<FontString name="WXP_Opt_ShowLevel" text="Show Level in Label" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
 							<Offset><AbsDimension x="0" y="-302"/></Offset>
@@ -233,7 +233,7 @@
 					</Anchors>
 				</FontString>
 				
-				<FontString name="WXP_Opt_ShowRealm" text="Show Realm in Label:" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+				<FontString name="WXP_Opt_ShowRealm" text="Show Realm in Label" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_LabelOpt_Subtitle" relativePoint="BOTTOMLEFT">
 							<Offset><AbsDimension x="0" y="-372"/></Offset>
