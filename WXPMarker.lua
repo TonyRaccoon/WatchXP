@@ -118,6 +118,18 @@ function WXPMarker:Update(args)			-- Update the data of an existing marker
 end
 
 function WXPMarker:Redraw(checkflip)	-- Redraw a marker
+	if self.blip.animation and self.blip.animation:IsPlaying() then -- Don't move this marker around if it's busy animating
+		WXP.Debug(WXPMarker.debug, "Attempted to redraw " .. self.player.name .. ", but it was animating, so skipped it")
+		
+		if WXP_Settings.label.show then -- We still have to show the label (if enabled) though, since it's always hidden before a :Redraw() to avoid flickering
+			self.blip.fontstring:Show()
+		else
+			self.blip.fontstring:Hide()
+		end
+	
+		return
+	end
+	
 	WXP.Debug(WXPMarker.debug, "Redrawing " .. self.player.name)
 	
 	-- Update frame
