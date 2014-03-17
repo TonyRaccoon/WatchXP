@@ -11,6 +11,8 @@ You can customize the texture, size, and vertical offset of the marker, and the 
 
 As of 3.0, support for localization is available. Please submit translations [here](http://wow.curseforge.com/addons/watchxp/localization/)
 
+Submit bugs/suggestions [here](http://wow.curseforge.com/addons/watchxp/create-ticket/)
+
 Commands:
 **All the ask commands require the other person to have WatchXP installed!**
 
