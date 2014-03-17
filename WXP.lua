@@ -243,7 +243,7 @@ function WXP.PollParty()						-- Send out XP req to party
 end
 
 function WXP.PollPlayer(name)					-- Send out XP req to player
-	WXP.Msg(format("Sending XP request to %s", WXP.PlayerLink(name)))
+	WXP.Msg(format(L["Sending XP request to %s"], WXP.PlayerLink(name)))
 	local str = string.format("ask-req,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"))
 	SendAddonMessage("WXP", str, "WHISPER", name)
 end
@@ -265,7 +265,7 @@ function WXP.PollBNFriend(ident)				-- Send out XP req to Battle.net friend
 	local _,name = BNGetFriendInfoByID(pid)
 	
 	if not pid then WXP.Msg("That is not a valid RealID friend") return end
-	WXP.Msg(format("Sending XP request to %s", name))
+	WXP.Msg(format(L["Sending XP request to %s"], name))
 	BNSendGameData(pid, "WXP", "bn-req,"..WXP.version)
 end
 
