@@ -7,6 +7,7 @@
 ## Notes-esMX: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
 ## Notes-deDE: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
 ## Notes-frFR: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
+## Notes-itIT: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
 ## Notes-ptBR: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
 ## Notes-ruRU: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
 ## Notes-koKR: Shows a marker on your experience bar for every person in your party with the addon installed, showing how far through their level they are.
