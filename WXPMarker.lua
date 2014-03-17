@@ -10,7 +10,7 @@ WXPMarker.debug = "|cffff9326[Marker]|r "
 function WXPMarker.new(args)			-- Create a new marker
 	local existingmarker = WXPMarker.Find(args.name, args.realm)
 	if existingmarker then -- If the marker already exists, update it instead
-		existingmarker:Update({name=args.name, realm=args.realm, level=args.level, xp=args.xp, xpmax=args.xpmax})
+		existingmarker:Update({level=args.level, xp=args.xp, xpmax=args.xpmax})
 		return
 	end
 	
@@ -34,6 +34,7 @@ function WXPMarker.RedrawAll()			-- Redraw all markers
 	WXP.Debug(WXPMarker.debug, "Redrawing all markers")
 	
 	for marker in WXPMarker.All("rtl") do
+		marker.blip.fontstring:Hide() -- Hide the fontstring (it gets shown again in :Redraw() to avoid it flickering for some reason
 		marker:Redraw(true)
 	end
 end
@@ -93,16 +94,27 @@ end
 --- Instance functions ---
 
 function WXPMarker:Update(args)			-- Update the data of an existing marker
-	WXP.Debug(WXPMarker.debug, "Updating marker for", WXP.PlayerLink(args.name,args.realm)) 
+	WXP.Debug(WXPMarker.debug, "Updating marker for", WXP.PlayerLink(self.player.name,self.player.realm))
 	
-	if args.name  then  self.player.name  = args.name   end
-	if args.realm then  self.player.realm = args.realm  end
-	if args.level then  self.player.level = args.level  end
-	if args.xp    then  self.player.xp    = args.xp     end
-	if args.xpmax then  self.player.xpmax = args.xpmax  end
-	
-	self:Redraw()
-	WXPMarker.RedrawAll()
+	if WXP_Settings.blip.animate then -- if animation is enabled, and an animation is necessary
+		local animated = self.blip:AnimateTo(args.level, args.xp, args.xpmax)
+		
+		self.player.level = args.level
+		self.player.xp    = args.xp
+		self.player.xpmax = args.xpmax
+		
+		if not animated then -- If the animation wasn't necessary then we'll have to redraw the marker manually
+			self:Redraw()
+			WXPMarker.RedrawAll()
+		end
+	else
+		self.player.level = args.level
+		self.player.xp    = args.xp
+		self.player.xpmax = args.xpmax
+		
+		self:Redraw()
+		WXPMarker.RedrawAll()
+	end
 end
 
 function WXPMarker:Redraw(checkflip)	-- Redraw a marker
@@ -159,6 +171,7 @@ function WXPMarker:Remove()				-- Remove a marker
 	self.blip.free = true
 	self.blip.marker = nil
 	self.blip.frame:Hide()
+	self.blip:CancelAnimation()
 	WXPMarker.instances[self:GetIndex()] = nil
 	WXPMarker.RedrawAll()
 end
@@ -223,4 +236,9 @@ function WXPMarker:GetIndex()			-- Get this marker's index in WXPMarker.instance
 	end
 	
 	return nil
+end
+
+function WXPMarker:GetXPFromPosition() -- Return the xp based on where the marker currently is (used in animation)
+	local _,_,_,xoff,yoff = self.blip.frame:GetPoint("CENTER")
+	return xoff / WXP_Frame:GetWidth() * self.player.xpmax
 end

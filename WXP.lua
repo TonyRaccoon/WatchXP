@@ -8,6 +8,7 @@ WXP.default_settings = {
 	
 	blip = {
 		show = true,
+		animate = true,
 		size = 20,
 		texture = "INTERFACE\\BUTTONS\\JumpUpArrow.blp",
 		
@@ -437,6 +438,7 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP.Debug("Initializing widgets")
 	
 	WXP_OptBut_Show:SetChecked(WXP_Settings.blip.show)
+	WXP_OptBut_Animate:SetChecked(WXP_Settings.blip.animate)
 	WXP_OptBut_ShowLabels:SetChecked(WXP_Settings.label.show)
 	
 	WXP_OptBut_FontSize:SetValue(WXP_Settings.label.font.size)
@@ -621,6 +623,13 @@ function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (butto
 			WXP_Frame:Hide()
 		end
 	
+	elseif self:GetName() == "WXP_OptBut_Animate" then
+		if WXP_OptBut_Animate:GetChecked() then
+			WXP_Settings.blip.animate = true
+		else
+			WXP_Settings.blip.animate = false
+		end
+	
 	elseif self:GetName() == "WXP_OptBut_ShowLabels" then
 		if WXP_OptBut_ShowLabels:GetChecked() then
 			WXP_Settings.label.show = true
@@ -790,30 +799,7 @@ function WXP.pop()								-- Debug function to add a bunch of markers
 end
 
 function WXP.xp(name,realm,level,xp,xpmax)		-- Debug function to update a marker
-	WXPMarker.Find(name,realm):Update({name=name,realm=realm,level=level,xp=xp,xpmax=xpmax})
-end
-
-function WXP.testanim()
-	fox = CreateFrame("Frame", "fox", UIParent)
-	fox:SetFrameStrata("BACKGROUND")
-	fox:SetWidth(100)
-	fox:SetHeight(100)
-	fox:SetPoint("CENTER", 0, 0)
-
-	fox.texture = fox:CreateTexture("foxtex", "ARTWORK")
-	fox.texture:SetTexture(255,127,0)
-	fox.texture:SetAllPoints(fox)
-	fox.animation = fox:CreateAnimationGroup("foxanim")
-
-	fox.animation.translate = fox.animation:CreateAnimation("Translation")
-	fox.animation.translate:SetDuration(3)
-	fox.animation.translate:SetSmoothing("IN_OUT")
-	fox.animation.translate:SetOffset(300, 0)
-	fox.animation:Play()
-
-	fox.animation:SetScript("OnFinished", function(frame)
-		print(frame:GetSmoothProgress())
-	end)
+	WXPMarker.Find(name,realm):Update({level=level,xp=xp,xpmax=xpmax})
 end
 
 --- Miscellaneous functions ---
@@ -860,4 +846,9 @@ function WXP.print_r(t, indent, done)			-- Prints a table and all its values
       print  (indent .. "[" .. tostring (key) .. "] => " .. tostring (value).."")
     end
   end
+end
+
+function WXP.round(num, idp)
+  local mult = 10^(idp or 0)
+  return math.floor(num * mult + 0.5) / mult
 end

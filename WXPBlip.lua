@@ -49,3 +49,64 @@ function WXPBlip.GetFree()	-- Get the first free blip, or create one if none are
 	WXP.Debug(WXPBlip.debug, "No free blips, creating a new one")
 	return WXPBlip.new()
 end
+
+--- Instance functions ---
+
+function WXPBlip:AnimateTo(level,newxp,newxpmax)
+	WXP.Debug(WXPAnim.debug, "AnimateTo "..newxp)
+	if level > self.marker.player.level then -- Just skip animations between levels, too much work to handle
+		WXP.Debug(WXPAnim.debug, "  New level, skipping")
+		self:CancelAnimation()
+		return false
+	elseif WXP.round(self.marker:GetXPFromPosition(), 4) == newxp then -- We're already here, don't do a pointless 0-pixel animation
+		WXP.Debug(WXPAnim.debug, "  No position change, skipping")
+		return false
+	elseif newxp < self.marker.player.xp then -- We'd be going backwards, so just move it manually
+		self:CancelAnimation()
+		self.marker:Redraw()
+		WXPMarker.RedrawAll()
+		return false
+	end
+	
+	local oldxp = self.marker.player.xp
+	local oldxpmax = self.marker.player.xpmax
+	
+	WXP.Debug(WXPAnim.debug, "  oldxp = "..oldxp)
+	
+	if self.animation then
+		self:CancelAnimation()
+		oldxp = self.marker:GetXPFromPosition()
+		WXP.Debug(WXPAnim.debug, "  Canceling previous animation, new oldxp = "..oldxp)
+	end
+	
+	self.animation = self.frame:CreateAnimationGroup()
+	self.animation.blip = self
+	
+	local distance = WXPAnim.GetDistance(oldxp, oldxpmax, newxp, newxpmax)
+	
+	self.animation.translation = self.animation:CreateAnimation("Translation")
+	self.animation.translation:SetDuration(WXPAnim.GetDuration(distance))
+	self.animation.translation:SetSmoothing("IN_OUT")
+	
+	self.animation.translation:SetOffset(distance, 0)
+	
+	self.animation:SetScript("OnFinished", function(self)
+		self:GetParent():SetScript("OnUpdate", WXPAnim.OnUpdate)
+	end)
+	
+	self.animation:Play()
+	
+	return true
+end
+
+function WXPBlip:CancelAnimation()
+	if not self.animation then
+		return
+	end
+	
+	local currentoffset = WXPAnim.GetCurrentOffset(self.animation)
+	self.frame:SetPoint("CENTER", WXP_Frame, "LEFT", currentoffset, WXP_Settings.blip.offset.y)
+	
+	self.animation:Stop()
+	self.animation = nil
+end

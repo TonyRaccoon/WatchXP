@@ -80,6 +80,20 @@
 				</Scripts>
 			</Checkbutton>
 			
+			<Checkbutton name="WXP_OptBut_Animate" inherits="OptionsCheckButtonTemplate">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="0" y="-40"/></Offset>
+					</Anchor>
+				</Anchors>
+				
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.blip.animate) end</OnShow>
+					<OnLoad>_G[self:GetName().."Text"]:SetText("Animate Blips")</OnLoad>
+					<OnClick>PlaySound("igMainMenuOptionCheckBoxOn") WXP.OnWidgetUsed(self)</OnClick>
+				</Scripts>
+			</Checkbutton>
+			
 			<Slider name="WXP_OptBut_BlipSize" inherits="OptionsSliderTemplate" minValue="8" maxValue="64" defaultValue="16" valueStep="1" obeyStepOnDrag="true">
 				<Anchors>
 					<Anchor point="LEFT" relativeTo="WXP_Opt_BlipSize" relativePoint="RIGHT">
