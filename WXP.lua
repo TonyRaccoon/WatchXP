@@ -100,7 +100,7 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 	elseif event == "CHAT_MSG_ADDON" then
 		local addonName, args, channel, sender = ...;
 		WXP.Debug("|cffcccccc[AddonMessage]|r|cffaaaaaa", addonName, args, channel, sender)
-		if sender == UnitName("player").."-"..GetRealmName("player") then return end -- Ignore messages from ourselves
+		if sender == UnitName("player").."-"..GetRealmName("player"):gsub("[%s%-]", "") then return end -- Ignore messages from ourselves (gsub is to remove hyphens and spaces from GetRealmName; sender does not include those (MoonGuard, AzjolNerub)
 		local msgArgs = {strsplit(",", args)}
 		
 		if msgArgs[1] == "party-xp" or msgArgs[1] == "ask-xp" then
