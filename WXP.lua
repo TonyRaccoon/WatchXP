@@ -696,97 +696,97 @@ function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (butto
 	
 	elseif self:GetName() == "WXP_OptBut_ShowLevel1" then	-- Never show level
 		WXP_Settings.label.showlevel = "never"
-		WXP_OptBut_ShowLevel1:SetChecked(1)
-		WXP_OptBut_ShowLevel2:SetChecked(nil)
-		WXP_OptBut_ShowLevel3:SetChecked(nil)
+		WXP_OptBut_ShowLevel1:SetChecked(true)
+		WXP_OptBut_ShowLevel2:SetChecked(false)
+		WXP_OptBut_ShowLevel3:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_ShowLevel2" then	-- Show level if different
 		WXP_Settings.label.showlevel = "different"
-		WXP_OptBut_ShowLevel1:SetChecked(nil)
-		WXP_OptBut_ShowLevel2:SetChecked(1)
-		WXP_OptBut_ShowLevel3:SetChecked(nil)
+		WXP_OptBut_ShowLevel1:SetChecked(false)
+		WXP_OptBut_ShowLevel2:SetChecked(true)
+		WXP_OptBut_ShowLevel3:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_ShowLevel3" then	-- Always
 		WXP_Settings.label.showlevel = "always"
-		WXP_OptBut_ShowLevel1:SetChecked(nil)
-		WXP_OptBut_ShowLevel2:SetChecked(nil)
-		WXP_OptBut_ShowLevel3:SetChecked(1)
+		WXP_OptBut_ShowLevel1:SetChecked(false)
+		WXP_OptBut_ShowLevel2:SetChecked(false)
+		WXP_OptBut_ShowLevel3:SetChecked(true)
 	
 	--- ShowRealm ---
 	
 	elseif self:GetName() == "WXP_OptBut_ShowRealm1" then	-- Never show realm
 		WXP_Settings.label.showrealm = "never"
-		WXP_OptBut_ShowRealm1:SetChecked(1)
-		WXP_OptBut_ShowRealm2:SetChecked(nil)
-		WXP_OptBut_ShowRealm3:SetChecked(nil)
+		WXP_OptBut_ShowRealm1:SetChecked(true)
+		WXP_OptBut_ShowRealm2:SetChecked(false)
+		WXP_OptBut_ShowRealm3:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_ShowRealm2" then	-- Show realm if different
 		WXP_Settings.label.showrealm = "different"
-		WXP_OptBut_ShowRealm1:SetChecked(nil)
-		WXP_OptBut_ShowRealm2:SetChecked(1)
-		WXP_OptBut_ShowRealm3:SetChecked(nil)
+		WXP_OptBut_ShowRealm1:SetChecked(false)
+		WXP_OptBut_ShowRealm2:SetChecked(true)
+		WXP_OptBut_ShowRealm3:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_ShowRealm3" then	-- Always show realm
 		WXP_Settings.label.showrealm = "always"
-		WXP_OptBut_ShowRealm1:SetChecked(nil)
-		WXP_OptBut_ShowRealm2:SetChecked(nil)
-		WXP_OptBut_ShowRealm3:SetChecked(1)
+		WXP_OptBut_ShowRealm1:SetChecked(false)
+		WXP_OptBut_ShowRealm2:SetChecked(false)
+		WXP_OptBut_ShowRealm3:SetChecked(true)
 		
 	--- End ShowRealm ---
 	
 	elseif self:GetName() == "WXP_OptBut_Font1" then		-- Friz Quadrata
 		WXP_Settings.label.font.face = "Fonts\\FRIZQT__.TTF"
-		WXP_OptBut_Font1:SetChecked(1)
-		WXP_OptBut_Font2:SetChecked(nil)
-		WXP_OptBut_Font3:SetChecked(nil)
-		WXP_OptBut_Font4:SetChecked(nil)
-		WXP_OptBut_Font5:SetChecked(nil)
-		WXP_OptBut_Font6:SetChecked(nil)
+		WXP_OptBut_Font1:SetChecked(true)
+		WXP_OptBut_Font2:SetChecked(false)
+		WXP_OptBut_Font3:SetChecked(false)
+		WXP_OptBut_Font4:SetChecked(false)
+		WXP_OptBut_Font5:SetChecked(false)
+		WXP_OptBut_Font6:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_Font2" then		-- Arial
 		WXP_Settings.label.font.face = "Fonts\\ARIALN.TTF"
-		WXP_OptBut_Font1:SetChecked(nil)
-		WXP_OptBut_Font2:SetChecked(1)
-		WXP_OptBut_Font3:SetChecked(nil)
-		WXP_OptBut_Font4:SetChecked(nil)
-		WXP_OptBut_Font5:SetChecked(nil)
-		WXP_OptBut_Font6:SetChecked(nil)
+		WXP_OptBut_Font1:SetChecked(false)
+		WXP_OptBut_Font2:SetChecked(true)
+		WXP_OptBut_Font3:SetChecked(false)
+		WXP_OptBut_Font4:SetChecked(false)
+		WXP_OptBut_Font5:SetChecked(false)
+		WXP_OptBut_Font6:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_Font3" then		-- Morpheus
 		WXP_Settings.label.font.face = "Fonts\\MORPHEUS.TTF"
-		WXP_OptBut_Font1:SetChecked(nil)
-		WXP_OptBut_Font2:SetChecked(nil)
-		WXP_OptBut_Font3:SetChecked(1)
-		WXP_OptBut_Font4:SetChecked(nil)
-		WXP_OptBut_Font5:SetChecked(nil)
-		WXP_OptBut_Font6:SetChecked(nil)
+		WXP_OptBut_Font1:SetChecked(false)
+		WXP_OptBut_Font2:SetChecked(false)
+		WXP_OptBut_Font3:SetChecked(true)
+		WXP_OptBut_Font4:SetChecked(false)
+		WXP_OptBut_Font5:SetChecked(false)
+		WXP_OptBut_Font6:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_Font4" then		-- Skurri
 		WXP_Settings.label.font.face = "Fonts\\SKURRI.TTF"
-		WXP_OptBut_Font1:SetChecked(nil)
-		WXP_OptBut_Font2:SetChecked(nil)
-		WXP_OptBut_Font3:SetChecked(nil)
-		WXP_OptBut_Font4:SetChecked(1)
-		WXP_OptBut_Font5:SetChecked(nil)
-		WXP_OptBut_Font6:SetChecked(nil)
+		WXP_OptBut_Font1:SetChecked(false)
+		WXP_OptBut_Font2:SetChecked(false)
+		WXP_OptBut_Font3:SetChecked(false)
+		WXP_OptBut_Font4:SetChecked(true)
+		WXP_OptBut_Font5:SetChecked(false)
+		WXP_OptBut_Font6:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_Font5" then		-- Nimrod
 		WXP_Settings.label.font.face = "Fonts\\NIM_____.ttf"
-		WXP_OptBut_Font1:SetChecked(nil)
-		WXP_OptBut_Font2:SetChecked(nil)
-		WXP_OptBut_Font3:SetChecked(nil)
-		WXP_OptBut_Font4:SetChecked(nil)
-		WXP_OptBut_Font5:SetChecked(1)
-		WXP_OptBut_Font6:SetChecked(nil)
+		WXP_OptBut_Font1:SetChecked(false)
+		WXP_OptBut_Font2:SetChecked(false)
+		WXP_OptBut_Font3:SetChecked(false)
+		WXP_OptBut_Font4:SetChecked(false)
+		WXP_OptBut_Font5:SetChecked(true)
+		WXP_OptBut_Font6:SetChecked(false)
 	
 	elseif self:GetName() == "WXP_OptBut_Font6" then		-- Mok
 		WXP_Settings.label.font.face = "Fonts\\K_Pagetext.TTF"
-		WXP_OptBut_Font1:SetChecked(nil)
-		WXP_OptBut_Font2:SetChecked(nil)
-		WXP_OptBut_Font3:SetChecked(nil)
-		WXP_OptBut_Font4:SetChecked(nil)
-		WXP_OptBut_Font5:SetChecked(nil)
-		WXP_OptBut_Font6:SetChecked(1)
+		WXP_OptBut_Font1:SetChecked(false)
+		WXP_OptBut_Font2:SetChecked(false)
+		WXP_OptBut_Font3:SetChecked(false)
+		WXP_OptBut_Font4:SetChecked(false)
+		WXP_OptBut_Font5:SetChecked(false)
+		WXP_OptBut_Font6:SetChecked(true)
 		
 	elseif self:GetName() == "WXP_OptBut_OffsetY" then
 		WXP_Settings.blip.offset.y = self:GetValue()

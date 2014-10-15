@@ -277,7 +277,7 @@
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\FRIZQT__.TTF" and 1 or 0) end</OnShow>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\FRIZQT__.TTF") end</OnShow>
 					<OnLoad>
 						_G[self:GetName().."Text"]:SetText("Friz Quadrata")
 						_G[self:GetName().."Text"]:SetFont("Fonts\\FRIZQT__.TTF", 12)
@@ -294,7 +294,7 @@
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\ARIALN.TTF" and 1 or 0) end</OnShow>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\ARIALN.TTF") end</OnShow>
 					<OnLoad>
 						_G[self:GetName().."Text"]:SetText("Arial")
 						_G[self:GetName().."Text"]:SetFont("Fonts\\ARIALN.TTF", 12)
@@ -311,7 +311,7 @@
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\MORPHEUS.TTF" and 1 or 0) end</OnShow>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\MORPHEUS.TTF") end</OnShow>
 					<OnLoad>
 						_G[self:GetName().."Text"]:SetText("Morpheus")
 						_G[self:GetName().."Text"]:SetFont("Fonts\\MORPHEUS.TTF", 12)
@@ -328,7 +328,7 @@
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\SKURRI.TTF" and 1 or 0) end</OnShow>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\SKURRI.TTF") end</OnShow>
 					<OnLoad>
 						_G[self:GetName().."Text"]:SetText("Skurri")
 						_G[self:GetName().."Text"]:SetFont("Fonts\\SKURRI.TTF", 12)
@@ -345,7 +345,7 @@
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\NIM_____.ttf" and 1 or 0) end</OnShow>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\NIM_____.ttf") end</OnShow>
 					<OnLoad>
 						_G[self:GetName().."Text"]:SetText("Nimrod")
 						_G[self:GetName().."Text"]:SetFont("Fonts\\NIM_____.ttf", 12)
@@ -362,7 +362,7 @@
 				</Anchors>
 				
 				<Scripts>
-					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\K_Pagetext.TTF" and 1 or 0) end</OnShow>
+					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.font.face == "Fonts\\K_Pagetext.TTF") end</OnShow>
 					<OnLoad>
 						_G[self:GetName().."Text"]:SetText("Mok")
 						_G[self:GetName().."Text"]:SetFont("Fonts\\K_Pagetext.TTF", 12)
@@ -422,9 +422,9 @@
 					<OnShow>
 						if WXP_Settings then
 							if WXP_Settings.label.showlevel == "never" then
-								self:SetChecked(1)
+								self:SetChecked(true)
 							else
-								self:SetChecked(nil)
+								self:SetChecked(false)
 							end
 						end
 					</OnShow>
@@ -442,8 +442,8 @@
 				<Scripts>
 					<OnShow>
 						if WXP_Settings then
-							if WXP_Settings.label.showlevel == "different" then self:SetChecked(1)
-							else self:SetChecked(nil) end
+							if WXP_Settings.label.showlevel == "different" then self:SetChecked(true)
+							else self:SetChecked(false) end
 						end
 					</OnShow>
 					<OnLoad>_G[self:GetName().."Text"]:SetText("Different")</OnLoad>
@@ -460,8 +460,8 @@
 				<Scripts>
 					<OnShow>
 						if WXP_Settings then
-							if WXP_Settings.label.showlevel == "always" then self:SetChecked(1)
-							else self:SetChecked(nil) end
+							if WXP_Settings.label.showlevel == "always" then self:SetChecked(true)
+							else self:SetChecked(false) end
 						end
 					</OnShow>
 					<OnLoad>_G[self:GetName().."Text"]:SetText("Always")</OnLoad>
@@ -480,9 +480,9 @@
 					<OnShow>
 						if WXP_Settings then
 							if WXP_Settings.label.showrealm == "never" then
-								self:SetChecked(1)
+								self:SetChecked(true)
 							else
-								self:SetChecked(nil)
+								self:SetChecked(false)
 							end
 						end
 					</OnShow>
@@ -500,8 +500,8 @@
 				<Scripts>
 					<OnShow>
 						if WXP_Settings then
-							if WXP_Settings.label.showrealm == "different" then self:SetChecked(1)
-							else self:SetChecked(nil) end
+							if WXP_Settings.label.showrealm == "different" then self:SetChecked(true)
+							else self:SetChecked(false) end
 						end
 					</OnShow>
 					<OnLoad>_G[self:GetName().."Text"]:SetText("Different")</OnLoad>
@@ -518,8 +518,8 @@
 				<Scripts>
 					<OnShow>
 						if WXP_Settings then
-							if WXP_Settings.label.showrealm == "always" then self:SetChecked(1)
-							else self:SetChecked(nil) end
+							if WXP_Settings.label.showrealm == "always" then self:SetChecked(true)
+							else self:SetChecked(false) end
 						end
 					</OnShow>
 					<OnLoad>_G[self:GetName().."Text"]:SetText("Always")</OnLoad>
