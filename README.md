@@ -27,6 +27,6 @@ Commands:
 * /wxp updatewarning/updwarn - Show or hide warnings when someone in your party is using an incompatible version of WatchXP
 * /wxp v/ver/vers/version - Print the version number and date of your copy of WatchXP
 
-Main page: http://www.curse.com/addons/wow/watchxp   
-Curse page: http://wow.curseforge.com/addons/watchxp/  
-GitHub page: https://github.com/tony311/WatchXP
+Main page: http://www.curse.com/addons/wow/watchxp  
+GitHub page: https://github.com/tony311/WatchXP  
+Discussion thread: http://forums.curseforge.com/showthread.php?t=21225
