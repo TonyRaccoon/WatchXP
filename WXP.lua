@@ -65,7 +65,7 @@ function WXP.OnLoad(self)						-- Fired when addon is loaded
 	self:RegisterEvent("BN_CHAT_MSG_ADDON")
 	RegisterAddonMessagePrefix("WXP")
 	
-	if UnitLevel("player") == WXP.GetMaxLevel() then
+	if UnitLevel("player") == WXP.GetMaxLevel() or IsXPUserDisabled() then
 		WXP_Frame:SetParent("ReputationWatchBar")
 		WXP_Frame:SetAllPoints()
 	end
