@@ -488,7 +488,7 @@ function WXP.InitializeWidgets()				-- Initialize options panel widgets
 	WXP_OptBut_BlipSizeHigh:SetText("64")
 	WXP_OptBut_BlipSizeText:SetText(WXP_OptBut_BlipSize:GetValue())
 	
-	WXP_OptBut_Color:SetTexture(WXP_Settings.label.color.r, WXP_Settings.label.color.g, WXP_Settings.label.color.b)
+	WXP_OptBut_Color:SetColorTexture(WXP_Settings.label.color.r, WXP_Settings.label.color.g, WXP_Settings.label.color.b)
 	
 	WXP_OptBut_Font1:SetChecked(WXP_Settings.label.font.face == "Fonts\\FRIZQT__.TTF")
 	WXP_OptBut_Font2:SetChecked(WXP_Settings.label.font.face == "Fonts\\ARIALN.TTF")
@@ -814,13 +814,13 @@ end
 function WXP.OnColorPickerChanged()				-- Fired when color picker is changed
 	WXP_Settings.label.color.r, WXP_Settings.label.color.g, WXP_Settings.label.color.b = ColorPickerFrame:GetColorRGB()
 	WXP_Settings.label.color.a = 1 - OpacitySliderFrame:GetValue()
-	WXP_OptBut_Color:SetTexture(ColorPickerFrame:GetColorRGB())
+	WXP_OptBut_Color:SetColorTexture(ColorPickerFrame:GetColorRGB())
 	WXPMarker.RedrawAll()
 end
 
 function WXP.OnColorPickerCanceled(prevValues) 	-- Fired when the color picker is closed with "Cancel"
 	WXP_Settings.label.color = prevValues
-	WXP_OptBut_Color:SetTexture(prevValues.r, prevValues.g, prevValues.b)
+	WXP_OptBut_Color:SetColorTexture(prevValues.r, prevValues.g, prevValues.b)
 	WXPMarker.RedrawAll()
 end
 
