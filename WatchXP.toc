@@ -1,4 +1,4 @@
-## Interface: 70100
+## Interface: 70200
 
 ## Title: WatchXP
 
@@ -15,8 +15,8 @@
 ## Notes-zhTW: Places markers on your experience/reputation bar, showing how far through the level your party members are (they need WatchXP)
 
 ## Author: Foxthorn
-## Version: 3.0.6
-## X-Date: December 8, 2016
+## Version: 3.0.7
+## X-Date: April 2, 2017
 ## SavedVariables: WXP_Settings
 
 localization.lua
