@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
-	<Frame name="WXP_Frame" hidden="False" parent="MainMenuExpBar" frameStrata="DIALOG">
+	<Frame name="WXP_Frame" hidden="False" parent="StatusTrackingBarManager" frameStrata="DIALOG">
 		<Scripts>
 			<OnLoad>WXP.OnLoad(self)</OnLoad>
 			<OnEvent>WXP.OnEvent(self, event, ...)</OnEvent>
@@ -59,7 +59,23 @@
 				<FontString name="WXP_Opt_BlipTexture" text="Blip Texture" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
-							<Offset><AbsDimension x="0" y="-180"/></Offset>
+							<Offset><AbsDimension x="0" y="-165"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_ParentFrame" text="Parent Frame" inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_Subtitle" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-400"/></Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+				
+				<FontString name="WXP_Opt_ParentFrame_Subtitle" text="Frame to attach blips to. Leave blank for default (experience bar). Use /fstack to get frame names." inherits="GameFontHighlightSmall" nonspacewrap="true" maxLines="3" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="WXP_Opt_ParentFrame" relativePoint="BOTTOMLEFT">
+							<Offset><AbsDimension x="0" y="-6"/></Offset>
 						</Anchor>
 					</Anchors>
 				</FontString>
@@ -139,6 +155,44 @@
 					<OnClick>WXP_OptBut_OffsetY:SetValue(0)</OnClick>
 				</Scripts>
 			</Button>
+			
+			
+			
+			
+			
+			<EditBox name="WXP_OptBut_ParentFrame" autoFocus="false" inherits="InputBoxTemplate">
+				<FontString inherits="ChatFontNormal"/>
+				<Size><AbsDimension x="300" y="32"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_Opt_ParentFrame_Subtitle" relativePoint="BOTTOMLEFT">
+						<Offset><AbsDimension x="10" y="0"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnShow>if WXP_Settings then self:SetText(WXP_Settings.parentframe) end</OnShow>
+					<OnEnterPressed>WXP.OnParentFrameChanged(self) self:ClearFocus() WXP_OptBut_ParentFrame_Okay:Hide()</OnEnterPressed>
+					<OnEscapePressed>self:SetText(WXP_Settings.parentframe) self:ClearFocus() WXP_OptBut_ParentFrame_Okay:Hide()</OnEscapePressed>
+					
+					<!-- SetText also triggers OnTextChanged, so ignore the first OnTextChanged after a SetText -->
+					<OnTextSet>self.changed = true</OnTextSet>
+					<OnTextChanged>if self.changed then self.changed = false else WXP_OptBut_ParentFrame_Okay:Show() end</OnTextChanged>
+				</Scripts>
+			</EditBox>
+			
+			<Button name="WXP_OptBut_ParentFrame_Okay" inherits="UIPanelButtonTemplate" text="Save" hidden="true">
+				<Size><AbsDimension x="48" y="24"/></Size>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WXP_OptBut_ParentFrame" relativePoint="TOPRIGHT">
+						<Offset><AbsDimension x="5" y="-4"/></Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>WXP.OnParentFrameChanged(WXP_OptBut_ParentFrame)</OnClick>
+				</Scripts>
+			</Button>
+			
+			
+			
 			
 			<Button name="WXP_OptBut_OpenLabels" inherits="UIPanelButtonTemplate" text="Label Settings">
 				<Size><AbsDimension x="128" y="32"/></Size>

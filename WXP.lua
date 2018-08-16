@@ -8,6 +8,7 @@ local L = namespace.L
 WXP.default_settings = {
 	debug = false,
 	updatewarning = true,
+	parentframe = "",
 	
 	blip = {
 		show = true,
@@ -63,12 +64,10 @@ function WXP.OnLoad(self)						-- Fired when addon is loaded
 	self:RegisterEvent("PARTY_MEMBER_DISABLE")
 	self:RegisterEvent("PARTY_MEMBER_ENABLE")
 	self:RegisterEvent("BN_CHAT_MSG_ADDON")
-	RegisterAddonMessagePrefix("WXP")
+	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+	C_ChatInfo.RegisterAddonMessagePrefix("WXP")
 	
-	if UnitLevel("player") == WXP.GetMaxLevel() or IsXPUserDisabled() then
-		WXP_Frame:SetParent("ReputationWatchBar")
-		WXP_Frame:SetAllPoints()
-	end
+	--if UnitLevel("player") == WXP.GetMaxLevel() or IsXPUserDisabled() then
 end
 
 function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is triggered
@@ -156,6 +155,9 @@ function WXP.OnEvent(self, event, ...)			-- Fired when a registered event is tri
 			WXP.PollParty()
 		end
 	
+	elseif event == "PLAYER_ENTERING_WORLD" then
+		WXP.UpdateParentFrame()
+	
 	end
 end
 
@@ -239,13 +241,13 @@ function WXP.PollParty()						-- Send out XP req to party
 	if GetNumSubgroupMembers("LE_PARTY_CATEGORY_HOME") == 0 then return end
 	WXP.Debug("|cff8888ff>>> Sending XP request to party|r")
 	local reqstr = string.format("party-req,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"))
-	SendAddonMessage("WXP",reqstr,"PARTY")
+	C_ChatInfo.SendAddonMessage("WXP",reqstr,"PARTY")
 end
 
 function WXP.PollPlayer(name)					-- Send out XP req to player
 	WXP.Msg(format(L["Sending XP request to %s"], WXP.PlayerLink(name)))
 	local str = string.format("ask-req,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"))
-	SendAddonMessage("WXP", str, "WHISPER", name)
+	C_ChatInfo.SendAddonMessage("WXP", str, "WHISPER", name)
 end
 
 function WXP.PollBNFriend(ident)				-- Send out XP req to Battle.net friend
@@ -280,7 +282,7 @@ function WXP.SendExpToParty()					-- Send out new XP value to party (response to
 	
 	WXP.Debug("|cff8888ff>>> Sending XP to party|r")
 	local str = string.format("party-xp,%s,%s,%s,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
-	SendAddonMessage("WXP", str, "PARTY")
+	C_ChatInfo.SendAddonMessage("WXP", str, "PARTY")
 end
 
 function WXP.SendExpToPlayer(name)				-- Send out new XP value to player (response to WXP.PollPlayer)
@@ -292,7 +294,7 @@ function WXP.SendExpToPlayer(name)				-- Send out new XP value to player (respon
 	WXP.Debug("|cffd24cff>>> Sending XP to|r", WXP.PlayerLink(name))
 	local str = string.format("ask-xp,%s,%s,%s,%s,%s,%s", WXP.version, UnitName("player"), GetRealmName("player"), UnitLevel("player"), UnitXP("player"), UnitXPMax("player"))
 	WXP.Debug(str)
-	SendAddonMessage("WXP", str, "WHISPER", name)
+	C_ChatInfo.SendAddonMessage("WXP", str, "WHISPER", name)
 end
 
 function WXP.SendExpToBNFriend(pid)				-- Send out new XP value to Battle.net friend (response to WXP.PollBNFriend)
@@ -607,6 +609,21 @@ function WXP.ShowColorPicker()					-- Show the color picker
 	ColorPickerFrame:Show();
 end
 
+function WXP.UpdateParentFrame()				-- Sets WXP's parent frame, either to the one defined in the settings, or BT4's exp bar, or vanilla's exp bar
+	if WXP_Settings.parentframe == "" or not _G[WXP_Settings.parentframe] then
+		-- if no custom frame is defined (or is but it doesn't exist), then use the BT4 bar if it exists, otherwise the vanilla bar
+		if BT4StatusBarTrackingManager then
+			WXP_Frame:SetParent("BT4StatusBarTrackingManager")
+		else
+			WXP_Frame:SetParent("StatusTrackingBarManager")
+		end
+	else
+		WXP_Frame:SetParent(WXP_Settings.parentframe)
+	end
+	WXP_Frame:SetAllPoints()
+	WXPMarker.RedrawAll()
+end
+
 --- UI events ---
 
 function WXP.OnBlipMouseEnter()					-- Fired when mouse enters a blip
@@ -826,6 +843,11 @@ end
 
 function WXP.OnSliderScroll(slider, delta) 		-- Fired when a slider is scrolled with the mouse wheel
 	slider:SetValue(slider:GetValue() + delta)
+end
+
+function WXP.OnParentFrameChanged(input)		-- Fired when enter is pressed in the 'parent frame' input box
+	WXP_Settings.parentframe = input:GetText()
+	WXP.UpdateParentFrame()
 end
 
 function WXP.OnDefaultsClicked()				-- Reset all settings to default when "Defaults" button is clicked
