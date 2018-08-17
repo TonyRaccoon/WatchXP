@@ -32,5 +32,5 @@ end
 function WXPAnim.GetDistance(oldxp, oldxpmax, newxp, newxpmax) -- Returns how far (in scaled pixels) the animation needs to slide
 	local oldpos = WXP_Frame:GetWidth() * (oldxp / oldxpmax)
 	local newpos = WXP_Frame:GetWidth() * (newxp / newxpmax)
-	return (newpos-oldpos) * WXP_Frame:GetEffectiveScale()
+	return (newpos-oldpos)
 end
