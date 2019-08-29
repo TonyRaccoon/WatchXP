@@ -1,0 +1,93 @@
+use this as wxpmarker.update:
+
+	function WXPMarker:Update(args)				-- Update the data of an existing marker (and start the animation if enabled)
+		WXP.Debug("|cffff9326[Marker]|r Updating marker for", WXP.PlayerLink(args.name,args.realm)) 
+		
+		-- Animation stuff
+		local newlevel = args.level ~= self.player.level
+		local oldpos = WXP_Frame:GetLeft() + WXP_Frame:GetWidth() * (self.player.xp / self.player.xpmax)
+		local newpos = WXP_Frame:GetLeft() + WXP_Frame:GetWidth() * (args.xp / args.xpmax)
+		local length = newpos-oldpos
+		local oldlevel = self.player.level
+		local olddist = WXP_Frame:GetWidth() * (args.xp/args.xpmax)
+		local newdist = WXP_Frame:GetWidth() * (self.player.xp/self.player.xpmax)
+		if not newlevel and args.xp <= self.player.xp then return end -- If XP is going backwards, ignore it because that should never happen
+		
+		if args.name  then  self.player.name  = args.name   end
+		if args.realm then  self.player.realm = args.realm  end
+		if args.level then  self.player.level = args.level  end
+		if args.xp    then  self.player.xp    = args.xp     end
+		if args.xpmax then  self.player.xpmax = args.xpmax  end
+		
+		if WXP_Settings.blip.animate then
+			if self.blip.animation:IsPlaying() then -- If an animation is still playing, cancel it, set our position to where the animation WAS, and start a new one
+				if self.blip.animation.startlevel ~= self.player.level then -- Crossing between levels
+					
+					local old_new_ratio = self.blip.animation.olddist / (self.blip.animation.olddist + self.blip.animation.newdist)
+					
+					if self.blip.animation:GetProgress() < old_new_ratio then -- Still animating through the old level
+						
+					else -- Animating through the new level
+						local pos = self.blip.animation.newdist
+						oldpos = pos + WXP_Frame:GetLeft()
+						length = newpos-oldpos
+						
+						self.blip.frame:SetPoint("CENTER",WXP_Frame,"LEFT",pos - WXP_Frame:GetLeft(),WXP_Settings.blip.offset.y)
+						self.blip.animation:Stop()
+					end
+				else
+					local pos = (self.blip.animation.startpoint - WXP_Frame:GetLeft()) + self.blip.animation.distance * WXP.GetEase(self.blip.animation:GetProgress())
+					oldpos = pos + WXP_Frame:GetLeft()
+					length = newpos-oldpos
+					
+					self.blip.frame:SetPoint("CENTER",WXP_Frame,"LEFT",pos,WXP_Settings.blip.offset.y)
+					self.blip.animation:Stop()
+				end
+			end
+			
+			self.blip.animation = self.blip.frame:CreateAnimationGroup("WXP_Anim_" .. self.blip.id)
+			self.blip.animation.blip = self.blip
+			self.blip.animation:SetScript("OnFinished", function(frame) WXPBlip.OnAnimationFinished(frame.blip) end)
+			
+			if newlevel then
+				self.blip.animation.translate = self.blip.animation:CreateAnimation("Translation")
+				self.blip.animation.translate:SetDuration(WXP.AnimTime(olddist))
+				self.blip.animation.translate:SetSmoothing("IN")
+				self.blip.animation.translate:SetOrder(1)
+				self.blip.animation.translate:SetOffset(olddist*WXP_Frame:GetEffectiveScale(), 0)
+				
+				self.blip.animation.translate2 = self.blip.animation:CreateAnimation("Translation")
+				self.blip.animation.translate2:SetDuration(0)
+				self.blip.animation.translate2:SetOrder(2)
+				self.blip.animation.translate2:SetOffset(-WXP_Frame:GetWidth() * WXP_Frame:GetEffectiveScale(), 0)
+				
+				self.blip.animation.translate3 = self.blip.animation:CreateAnimation("Translation")
+				self.blip.animation.translate3:SetDuration(WXP.AnimTime(newdist))
+				self.blip.animation.translate3:SetSmoothing("OUT")
+				self.blip.animation.translate3:SetOrder(3)
+				self.blip.animation.translate3:SetOffset(newdist*WXP_Frame:GetEffectiveScale(), 0)
+				
+				self.blip.animation.distance = length
+				self.blip.animation.startpoint = oldpos
+				self.blip.animation.startlevel = oldlevel
+				self.blip.animation.olddist = olddist
+				self.blip.animation.newdist = newdist
+				self.blip.animation:Play()
+			else
+				self.blip.animation.translate = self.blip.animation:CreateAnimation("Translation")
+				self.blip.animation.translate:SetDuration(WXP.AnimTime(length))
+				self.blip.animation.translate:SetSmoothing("IN_OUT")
+				self.blip.animation.translate:SetOffset(length*WXP_Frame:GetEffectiveScale(), 0)
+				
+				self.blip.animation.distance = length
+				self.blip.animation.startpoint = oldpos
+				self.blip.animation.startlevel = oldlevel
+				self.blip.animation.olddist = olddist
+				self.blip.animation.newdist = newdist
+				self.blip.animation:Play()
+			end
+		else
+			self:Redraw()
+			WXPMarker:RedrawAll()
+		end
+	end
