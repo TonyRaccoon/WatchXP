@@ -612,8 +612,10 @@ end
 function WXP.UpdateParentFrame()				-- Sets WXP's parent frame, either to the one defined in the settings, or BT4's exp bar, or vanilla's exp bar
 	if WXP_Settings.parentframe == "" or not _G[WXP_Settings.parentframe] then
 		-- if no custom frame is defined (or is but it doesn't exist), then use the BT4 bar if it exists, otherwise the vanilla bar
-		if BT4StatusBarTrackingManager then
-			WXP_Frame:SetParent("BT4StatusBarTrackingManager")
+		if MainMenuExpBar then
+			WXP_Frame:SetParent("MainMenuExpBar")
+		elseif BT4StatusBarTrackingManager then
+			WXP_Frame:SetParent("BT4StatusBarTrackingManager")			
 		else
 			WXP_Frame:SetParent("StatusTrackingBarManager")
 		end
