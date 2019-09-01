@@ -92,7 +92,7 @@
 				<Scripts>
 					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.blip.show) end</OnShow>
 					<OnLoad>_G[self:GetName().."Text"]:SetText("Show WatchXP")</OnLoad>
-					<OnClick>PlaySound("igMainMenuOptionCheckBoxOn") WXP.OnWidgetUsed(self)</OnClick>
+					<OnClick>PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) WXP.OnWidgetUsed(self)</OnClick>
 				</Scripts>
 			</Checkbutton>
 			
@@ -106,7 +106,7 @@
 				<Scripts>
 					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.blip.animate) end</OnShow>
 					<OnLoad>_G[self:GetName().."Text"]:SetText("Animate Blips")</OnLoad>
-					<OnClick>PlaySound("igMainMenuOptionCheckBoxOn") WXP.OnWidgetUsed(self)</OnClick>
+					<OnClick>PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) WXP.OnWidgetUsed(self)</OnClick>
 				</Scripts>
 			</Checkbutton>
 			
@@ -307,7 +307,7 @@
 				<Scripts>
 					<OnShow>if WXP_Settings then self:SetChecked(WXP_Settings.label.show) end</OnShow>
 					<OnLoad>_G[self:GetName().."Text"]:SetText("Show Labels")</OnLoad>
-					<OnClick>PlaySound("igMainMenuOptionCheckBoxOn") WXP.OnWidgetUsed(self)</OnClick>
+					<OnClick>PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) WXP.OnWidgetUsed(self)</OnClick>
 				</Scripts>
 			</Checkbutton>
 			

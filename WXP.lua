@@ -687,7 +687,7 @@ function WXP.OnWidgetUsed(self)					-- Fired when an options panel widget (butto
 	if not WXP_Settings then return end
 	
 	if self:GetObjectType() ~= "Slider" then
-		PlaySound("igMainMenuOptionCheckBoxOn")
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 	end
 	
 	if self:GetName() == "WXP_OptBut_Show" then
